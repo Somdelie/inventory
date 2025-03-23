@@ -13,6 +13,7 @@ async function getUserWithRoles(userId: string) {
     where: { id: userId },
     include: {
       roles: true, // Include roles relation
+      Organization: true, // Include organization relation
     },
   });
 
@@ -27,7 +28,56 @@ async function getUserWithRoles(userId: string) {
   return {
     ...user,
     permissions: uniquePermissions,
+    organizationId: user.organizationId ?? undefined,
+    organizationName: user.Organization?.name,
   };
+}
+
+// Helper function to create or find a default organization for OAuth users
+async function getOrCreateDefaultOrganization(userEmail: string) {
+  // Create a slug from email (remove @ and domain parts)
+  const emailName = userEmail.split("@")[0];
+  const slug = `${emailName}-org`.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+
+  try {
+    // Check if user already has an organization
+    const existingUser = await db.user.findUnique({
+      where: { email: userEmail },
+      include: { Organization: true },
+    });
+
+    if (existingUser?.Organization) {
+      return existingUser.Organization;
+    }
+
+    // Create a new organization with a unique name based on the user's email
+    return await db.organization.create({
+      data: {
+        name: `${emailName}'s Organization`,
+        slug: slug,
+        industry: "Not Specified",
+        country: "Not Specified",
+        email: userEmail,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating organization:", error);
+
+    // Fallback to finding any existing default organization
+    const defaultOrg = await db.organization.findFirst({
+      where: { slug: "default-organization" },
+    });
+
+    if (defaultOrg) return defaultOrg;
+
+    // Create a truly default one if nothing else worked
+    return await db.organization.create({
+      data: {
+        name: "Default Organization",
+        slug: "default-organization",
+      },
+    });
+  }
 }
 
 export const authOptions: NextAuthOptions = {
@@ -47,6 +97,9 @@ export const authOptions: NextAuthOptions = {
           where: { roleName: "user" },
         });
 
+        // Get or create an organization for this user
+        const org = await getOrCreateDefaultOrganization(profile.email);
+
         return {
           id: profile.id.toString(),
           name: profile.name || profile.login,
@@ -55,6 +108,8 @@ export const authOptions: NextAuthOptions = {
           phone: "",
           image: profile.avatar_url,
           email: profile.email,
+          organizationId: org.id,
+          organizationName: org.name,
           roles: defaultRole ? [defaultRole] : [],
           permissions: defaultRole ? defaultRole.permissions : [], // Include permissions from default role
         };
@@ -69,6 +124,9 @@ export const authOptions: NextAuthOptions = {
           where: { roleName: "user" },
         });
 
+        // Get or create an organization for this user
+        const org = await getOrCreateDefaultOrganization(profile.email);
+
         return {
           id: profile.sub,
           name: `${profile.given_name} ${profile.family_name}`,
@@ -77,6 +135,8 @@ export const authOptions: NextAuthOptions = {
           phone: "",
           image: profile.picture,
           email: profile.email,
+          organizationId: org.id,
+          organizationName: org.name,
           roles: defaultRole ? [defaultRole] : [],
           permissions: defaultRole ? defaultRole.permissions : [], // Include permissions from default role
         };
@@ -100,6 +160,7 @@ export const authOptions: NextAuthOptions = {
             where: { email: credentials.email },
             include: {
               roles: true, // Include roles relation
+              Organization: true, // Include organization relation
             },
           });
 
@@ -117,6 +178,11 @@ export const authOptions: NextAuthOptions = {
 
           if (!passwordMatch) {
             throw { error: "Password Incorrect", status: 401 };
+          }
+
+          //check if user is verified
+          if (!existingUser.isVerfied) {
+            throw { error: "User is not verified", status: 401 };
           }
 
           // Get all permissions from user's roles
@@ -137,6 +203,8 @@ export const authOptions: NextAuthOptions = {
             email: existingUser.email,
             roles: existingUser.roles,
             permissions: uniquePermissions,
+            organizationId: existingUser.organizationId ?? undefined,
+            organizationName: existingUser.Organization?.name,
           };
         } catch (error) {
           throw { error: "Something went wrong", status: 401 };
@@ -146,16 +214,25 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account }) {
-      // For OAuth providers, assign default role if user is new
+      // For OAuth providers, assign default role and organization if user is new
       if (
         account &&
         (account.provider === "google" || account.provider === "github")
       ) {
         const existingUser = await db.user.findUnique({
           where: { email: user.email! },
-          include: { roles: true },
+          include: {
+            roles: true,
+            Organization: true,
+          },
         });
 
+        console.log("existingUser", existingUser);
+
+        // Create update data object
+        const updateData: any = {};
+
+        // Handle role assignment if needed
         if (!existingUser?.roles?.length) {
           // Assign default user role
           const defaultRole = await db.role.findFirst({
@@ -163,15 +240,26 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (defaultRole) {
-            await db.user.update({
-              where: { email: user.email! },
-              data: {
-                roles: {
-                  connect: { id: defaultRole.id },
-                },
-              },
-            });
+            updateData.roles = {
+              connect: { id: defaultRole.id },
+            };
           }
+        }
+
+        // Handle organization assignment if needed
+        if (!existingUser?.organizationId) {
+          const org = await getOrCreateDefaultOrganization(user.email!);
+          updateData.Organization = {
+            connect: { id: org.id },
+          };
+        }
+
+        // Update user if we have changes to make
+        if (Object.keys(updateData).length > 0) {
+          await db.user.update({
+            where: { email: user.email! },
+            data: updateData,
+          });
         }
       }
       return true;
@@ -188,12 +276,16 @@ export const authOptions: NextAuthOptions = {
         token.phone = user.phone;
         token.roles = user.roles;
         token.permissions = user.permissions;
+        token.organizationId = user.organizationId;
+        token.organizationName = user.organizationName;
       } else {
-        // For subsequent requests, refresh roles and permissions
+        // For subsequent requests, refresh roles, permissions, and organization data
         const userData = await getUserWithRoles(token.id);
         if (userData) {
           token.roles = userData.roles;
           token.permissions = userData.permissions;
+          token.organizationId = userData.organizationId ?? undefined;
+          token.organizationName = userData.organizationName;
         }
       }
       return token;
@@ -209,6 +301,12 @@ export const authOptions: NextAuthOptions = {
         session.user.phone = token.phone;
         session.user.roles = token.roles;
         session.user.permissions = token.permissions;
+        session.user.organizationId = token.organizationId as
+          | string
+          | undefined;
+        session.user.organizationName = token.organizationName as
+          | string
+          | undefined;
       }
       return session;
     },

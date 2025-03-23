@@ -154,7 +154,11 @@ const bigCards = [
     icon: Users,
   },
 ];
-export default function DashboardMain() {
+interface User {
+  organizationName?: string;
+}
+
+export default function DashboardMain({ user }: { user: User }) {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -162,7 +166,10 @@ export default function DashboardMain() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-muted-foreground">
-              Here's your statistics overview.
+              Here's your statistics overview for{" "}
+              <strong className="text-rose-500">
+                {user?.organizationName}
+              </strong>
             </p>
           </div>
           <div className="flex items-center space-x-4">
@@ -183,7 +190,7 @@ export default function DashboardMain() {
             </Button>
           </div>
         </div>
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-12 gap-4">
           {/* Big Cards - 4 cards in a row */}
           {bigCards.map((card, index) => (
             <Card key={index} className="col-span-3 relative overflow-hidden">
@@ -196,7 +203,9 @@ export default function DashboardMain() {
               <CardContent>
                 <div className="text-2xl font-bold">{card.value}</div>
                 <div
-                  className={`flex items-center text-sm ${card.trend === "up" ? "text-green-600" : "text-red-600"}`}
+                  className={`flex items-center text-sm ${
+                    card.trend === "up" ? "text-green-600" : "text-red-600"
+                  }`}
                 >
                   View details
                   <ArrowRight className="mr-1 h-4 w-4" />
@@ -260,8 +269,8 @@ export default function DashboardMain() {
                             activity.status === "Completed"
                               ? "bg-green-100 text-green-800"
                               : activity.status === "Pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-blue-100 text-blue-800"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-blue-100 text-blue-800"
                           }`}
                         >
                           {activity.status}

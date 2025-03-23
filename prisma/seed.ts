@@ -71,6 +71,7 @@ const userPermissions = [
   "orders.read",
   "orders.create",
 ];
+
 async function cleanDatabase() {
   console.log("Cleaning up existing data...");
   try {
@@ -96,17 +97,20 @@ async function cleanDatabase() {
         }
       }
 
-      // Delete all sessions first (if you have them)
+      // Delete all organizations first
+      await tx.organization.deleteMany({});
+
+      // Delete all sessions
       await tx.session.deleteMany({});
 
-      // Delete all accounts (if you have them)
+      // Delete all accounts
       await tx.account.deleteMany({});
 
-      // Delete all Blogs and Blog cats (if you have them)
+      // Delete all Blogs and Blog cats
       await tx.blog.deleteMany({});
       await tx.blogCategory.deleteMany({});
 
-      // Delete all Savings and Categories  (if you have them)
+      // Delete all Savings and Categories
       await tx.saving.deleteMany({});
       await tx.category.deleteMany({});
 
@@ -130,6 +134,42 @@ async function seedDatabase() {
   try {
     console.log("Starting to seed new data...");
 
+    // Create organizations
+    console.log("Creating organizations...");
+    const adminOrg = await db.organization.create({
+      data: {
+        name: "Developer Organization",
+        slug: "developer-org",
+        industry: "Technology",
+        country: "South Africa",
+        city: "Johannesburg",
+        address: "123 Main Street",
+        phone: "+27 123 456 7890",
+        email: "info@cautiousndlovu.co.za",
+        website: "https://cautiousndlovu.co.za",
+        currency: "ZAR",
+        timezone: "Africa/Johannesburg",
+        fisicalYear: "January-December",
+      },
+    });
+
+    const userOrg = await db.organization.create({
+      data: {
+        name: "Regular User Organization",
+        slug: "regular-user-org",
+        industry: "Consumer",
+        country: "South Africa",
+        city: "Cape Town",
+        address: "456 User Street",
+        phone: "+27 098 765 4321",
+        email: "contact@user-org.com",
+        website: "https://user-org.com",
+        currency: "ZAR",
+        timezone: "Africa/Johannesburg",
+        fisicalYear: "January-December",
+      },
+    });
+
     // Create admin role with all permissions
     console.log("Creating admin role...");
     const adminRole = await db.role.create({
@@ -151,8 +191,7 @@ async function seedDatabase() {
         permissions: userPermissions,
       },
     });
-    // admin@cautiousndlovu.co.za
-    // Admin@2025
+
     // Create admin user
     console.log("Creating admin user...");
     const adminPassword = `Admin@${currentYear}`;
@@ -168,6 +207,9 @@ async function seedDatabase() {
         password: hashedAdminPassword,
         roles: {
           connect: { id: adminRole.id },
+        },
+        Organization: {
+          connect: { id: adminOrg.id },
         },
       },
     });
@@ -185,8 +227,12 @@ async function seedDatabase() {
         lastName: "User",
         phone: "0987654321",
         password: hashedUserPassword,
+        organizationName: userOrg.name,
         roles: {
           connect: { id: userRole.id },
+        },
+        Organization: {
+          connect: { id: adminOrg.id },
         },
       },
     });
@@ -195,16 +241,19 @@ async function seedDatabase() {
     console.log("Admin credentials:", {
       email: "admin@cautiousndlovu.co.za",
       password: adminPassword,
+      organization: adminOrg.name,
     });
     console.log("User credentials:", {
       email: "user@user.com",
       password: userPassword,
+      organization: userOrg.name,
     });
   } catch (error) {
     console.error("Error during seeding:", error);
     throw error;
   }
 }
+
 async function main() {
   console.log("Starting database seed process...");
 

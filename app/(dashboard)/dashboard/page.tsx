@@ -8,7 +8,13 @@ import { redirect } from "next/navigation";
 
 export default async function Dashboard() {
   const analytics = (await getDashboardOverview()) || [];
-  const user = await getAuthenticatedUser();
+  const user = {
+    ...(await getAuthenticatedUser()),
+    organizationName: (await getAuthenticatedUser())?.organizationName ?? "",
+  };
+
+  console.log(user?.organizationName, "this is the user organization name");
+
   return (
     <main>
       {/* <div className="space-y-6">
@@ -27,7 +33,7 @@ export default async function Dashboard() {
           ))}
         </div>
       </div> */}
-      <DashboardMain />
+      <DashboardMain user={user} />
     </main>
   );
 }

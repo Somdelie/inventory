@@ -57,28 +57,56 @@ model Role {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String
-  firstName     String
-  lastName      String
-  phone         String    @unique
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  jobTitle      String?
-  roles         Role[]    @relation("UserRoles") // Updated to support multiple roles
+  id               String        @id @default(cuid())
+  name             String
+  firstName        String
+  lastName         String
+  phone            String        @unique
+  email            String        @unique
+  emailVerified    DateTime?
+  image            String?
+  jobTitle         String?
+  roles            Role[]        @relation("UserRoles") // Updated to support multiple roles
   // role          UserRole  @default(USER)
-  password      String?
-  status        Boolean   @default(true)
-  accounts      Account[]
-  sessions      Session[]
-  savings       Saving[]
-  blogs         Blog[]
-  isVerfied     Boolean   @default(false)
-  token         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  roleId        String?
+  password         String?
+  status           Boolean       @default(true)
+  accounts         Account[]
+  sessions         Session[]
+  savings          Saving[]
+  blogs            Blog[]
+  isVerfied        Boolean       @default(false)
+  token            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  roleId           String?
+  country          String?
+  state            String?
+  city             String?
+  address          String?
+  organizationName String?
+  Organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId   String?
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  industry    String?
+  country     String?
+  state       String?
+  city        String?
+  address     String?
+  phone       String?
+  email       String?
+  website     String?
+  currency    String?
+  timezone    String?
+  startDate   DateTime @default(now())
+  fisicalYear String?
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Category {

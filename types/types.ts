@@ -21,7 +21,31 @@ export type UserProps = {
   image: string;
   email: string;
   password: string;
+  country: string;
+  state: string;
+  city: string;
+  address: string;
+  organizationName: string;
+  organizationId: string;
+  isNewOrganizationAdmin?: string; // To track if user should become admin of new org
 };
+
+// Add this to your types.ts file or wherever you define UserProps
+
+export interface OrganizationProps {
+  id?: string;
+  name: string;
+  slug?: string;
+  industry?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+}
+
 export type LoginProps = {
   email: string;
   password: string;

@@ -46,7 +46,15 @@ export default function HeroSection() {
             </div>
 
             {/* Floating elements */}
-            <div className="absolute -left-4 -top-4 h-16 w-16 rounded-full border-4 border-white bg-slate-50 p-2 shadow-md">
+            <Image
+              src={"/p1.jpg"}
+              alt="Product icon"
+              width={500}
+              height={500}
+              className="absolute left-4 -top-4 h-16 w-16 rounded-full object-cover shadow-md"
+            />
+
+            {/* <div className="absolute -left-4 -top-4 h-16 w-16 rounded-full border-4 border-white bg-slate-50 p-2 shadow-md">
               <Image
                 src="/p1.jpg"
                 alt="Product icon"
@@ -54,7 +62,7 @@ export default function HeroSection() {
                 height={500}
                 className="rounded-full object-cover"
               />
-            </div>
+            </div> */}
 
             <div className="absolute -right-4 bottom-1/3 h-16 w-16 rounded-full border-4 border-white bg-slate-50 p-2 shadow-md">
               <Image

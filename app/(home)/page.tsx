@@ -60,13 +60,13 @@ export default async function Page() {
       /> */}
 
       {/* Trusted By Section */}
-      <div className="bg-muted/30 py-12">
-        <div className="container mx-auto px-4">
-          <h2 className="text-center text-2xl font-semibold mb-8">
+      <div className="bg-muted/30 py-6">
+        <div className="mx-auto">
+          <h2 className="text-center text-2xl font-semibold">
             Trusted By Industry Leaders
           </h2>
           <GridBackground>
-            <div className="px-4 py-8">
+            <div className=" py-8">
               <TechStackGrid />
             </div>
           </GridBackground>

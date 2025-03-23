@@ -35,7 +35,7 @@ export default function Footer() {
   const router = useRouter();
   const { email, fullAddress, mainPhone } = getContactInfo();
   return (
-    <footer className="bg-gray-900 text-white py-16 px-4 md:px-8 lg:px-16 rounded-t-[2.5rem] relative overflow-hidden">
+    <footer className="bg-gray-900 text-white py-16 px-4 md:px-8 lg:px-16 relative overflow-hidden">
       {/* Background gradient effects */}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl"></div>

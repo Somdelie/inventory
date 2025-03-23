@@ -206,7 +206,7 @@ const TechStackGrid: React.FC<TechStackGridProps> = ({ theme = "light" }) => {
     <div
       className={`
       relative flex flex-col items-center justify-center p-3 sm:p-4 
-      ${style.card} ${style.cardGlow} rounded-xl 
+      ${style.card} ${style.cardGlow} rounded
       transition-all duration-300
       overflow-hidden
     `}
@@ -244,7 +244,7 @@ const TechStackGrid: React.FC<TechStackGridProps> = ({ theme = "light" }) => {
 
   return (
     <div
-      className={`w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 rounded-3xl border ${style.wrapper} transition-colors duration-300`}
+      className={`w-full max-w-[90%] mx-auto py-4 sm:py-4 lg:py-6 rounded border ${style.wrapper} transition-colors duration-300`}
     >
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">

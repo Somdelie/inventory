@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Rethink_Sans } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
-import { Toaster } from "react-hot-toast";
 import Providers from "@/components/Providers";
 // import FooterBanner from "@/components/Footer";
 const inter = Rethink_Sans({ subsets: ["latin"], display: "swap" });
@@ -20,6 +20,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>{children}</Providers>
+        <Toaster />
       </body>
     </html>
   );
