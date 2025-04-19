@@ -3,6 +3,7 @@ import { Rethink_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 import Providers from "@/components/Providers";
+import { ThemeProvider } from "@/components/reusable-ui/theme-provider";
 // import FooterBanner from "@/components/Footer";
 const inter = Rethink_Sans({ subsets: ["latin"], display: "swap" });
 
@@ -19,7 +20,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <Providers>{children}</Providers>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Providers>
+            <main className="dark:bg-black">{children}</main>
+          </Providers>
+        </ThemeProvider>
         <Toaster />
       </body>
     </html>

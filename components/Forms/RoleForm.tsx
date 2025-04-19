@@ -17,9 +17,14 @@ import { createRole, updateRole } from "@/actions/roles";
 type RoleFormProps = {
   editingId?: string;
   initialData?: Role | null;
+  organizationId: string;
 };
 
-export default function RoleForm({ editingId, initialData }: RoleFormProps) {
+export default function RoleForm({
+  editingId,
+  initialData,
+  organizationId,
+}: RoleFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const {
@@ -33,11 +38,13 @@ export default function RoleForm({ editingId, initialData }: RoleFormProps) {
       displayName: initialData?.displayName || "",
       description: initialData?.description || "",
       permissions: initialData?.permissions || [],
+      organizationId: initialData?.organizationId || "",
     },
   });
 
   async function saveRole(data: RoleFormData) {
     try {
+      data.organizationId = organizationId;
       setLoading(true);
       const result = editingId
         ? await updateRole(editingId, data)
@@ -51,7 +58,7 @@ export default function RoleForm({ editingId, initialData }: RoleFormProps) {
       toast.success(
         editingId ? "Role updated successfully!" : "Role created successfully!"
       );
-      router.push("/dashboard/users/roles");
+      router.push("/dashboard/settings/roles");
       router.refresh();
     } catch (error) {
       toast.error("Something went wrong!");

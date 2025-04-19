@@ -1,6 +1,5 @@
 import Link from "next/link";
-import React from "react";
-import HubStackLogo from "./kit-logo";
+import Image from "next/image";
 
 export default function Logo({
   variant = "light",
@@ -9,17 +8,27 @@ export default function Logo({
   variant?: "dark" | "light";
   href?: string;
 }) {
-  if (variant === "light") {
-    return (
-      <Link href={href} className="flex items-center space-x-2">
-        <HubStackLogo width={200} height={60} />
-      </Link>
-    );
-  } else {
-    return (
-      <Link href={"/"} className="flex items-center space-x-2">
-        <HubStackLogo width={200} height={60} theme="dark" />
-      </Link>
-    );
-  }
+  return (
+    <Link href={href} className="flex items-center space-x-3">
+      {variant === "dark" ? (
+        <Image
+          src="/invelogo-dark.png" // Using the existing PNG file
+          alt="Somdelie Inventory Logo"
+          width={200}
+          height={60}
+          className="object-contain"
+          priority // Ensures fast loading
+        />
+      ) : (
+        <Image
+          src="/invelogo.png" // Using the existing PNG file
+          alt="Somdelie Inventory Logo"
+          width={200}
+          height={60}
+          className="object-contain"
+          priority // Ensures fast loading
+        />
+      )}
+    </Link>
+  );
 }

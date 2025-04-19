@@ -1,9 +1,30 @@
+import { withUt } from "uploadthing/tw";
+import type { Config } from "tailwindcss";
+import type { PluginAPI } from "tailwindcss/types/config";
+
 const defaultTheme = require("tailwindcss/defaultTheme");
 const colors = require("tailwindcss/colors");
 const {
   default: flattenColorPalette,
 } = require("tailwindcss/lib/util/flattenColorPalette");
-import { withUt } from "uploadthing/tw";
+
+// Properly type the function parameters
+function addVariablesForColors({
+  addBase,
+  theme,
+}: {
+  addBase: PluginAPI["addBase"];
+  theme: PluginAPI["theme"];
+}) {
+  const allColors = flattenColorPalette(theme("colors"));
+  const newVars = Object.fromEntries(
+    Object.entries(allColors).map(([key, val]) => [`--${key}`, val])
+  );
+
+  addBase({
+    ":root": newVars as Record<string, string>,
+  });
+}
 
 export default withUt({
   darkMode: ["class"],
@@ -13,6 +34,7 @@ export default withUt({
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
     "./node_modules/react-tailwindcss-select/dist/index.esm.js",
+    "*.{js,ts,jsx,tsx,mdx}",
   ],
   prefix: "",
   theme: {
@@ -102,6 +124,15 @@ export default withUt({
             transform: "translateY(calc(-100% - var(--gap)))",
           },
         },
+        // Add tab slide animations
+        "tab-slide-in": {
+          "0%": { transform: "translateX(20px)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        "tab-slide-out": {
+          "0%": { transform: "translateX(0)", opacity: "1" },
+          "100%": { transform: "translateX(-20px)", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -109,6 +140,9 @@ export default withUt({
         "border-beam": "border-beam calc(var(--duration)*1s) infinite linear",
         marquee: "marquee var(--duration) infinite linear",
         "marquee-vertical": "marquee-vertical var(--duration) linear infinite",
+        // Add tab slide animation classes
+        "tab-slide-in": "tab-slide-in 0.3s ease-out forwards",
+        "tab-slide-out": "tab-slide-out 0.3s ease-out forwards",
       },
     },
   },
@@ -117,15 +151,4 @@ export default withUt({
     addVariablesForColors,
     require("@tailwindcss/forms"),
   ],
-});
-
-function addVariablesForColors({ addBase, theme }: any) {
-  let allColors = flattenColorPalette(theme("colors"));
-  let newVars = Object.fromEntries(
-    Object.entries(allColors).map(([key, val]) => [`--${key}`, val])
-  );
-
-  addBase({
-    ":root": newVars,
-  });
-}
+} satisfies Config);

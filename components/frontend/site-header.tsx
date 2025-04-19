@@ -37,6 +37,8 @@ import Logo from "../global/Logo";
 import { Session } from "next-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/generateInitials";
+import { ModeToggle } from "../reusable-ui/ModeToggle";
+import { useTheme } from "next-themes";
 
 const features = [
   {
@@ -107,24 +109,27 @@ const features = [
 export default function SiteHeader({ session }: { session: Session | null }) {
   const [open, setOpen] = React.useState(false);
   const [showFeatures, setShowFeatures] = React.useState(false);
+  const { theme } = useTheme(); // Get the current theme
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ">
       <div className="container max-w-7xl mx-auto flex h-14 items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Logo />
+          <Logo variant={theme === "dark" ? "dark" : "light"} />
           <NavigationMenu className="hidden md:flex">
             <NavigationMenuList>
               <NavigationMenuItem>
                 <Link href="/" legacyBehavior passHref>
-                  <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
+                  <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
                     Home
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Features</NavigationMenuTrigger>
+                <NavigationMenuTrigger className="bg-transparent">
+                  Features
+                </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <div className="w-[800px] p-4">
                     <div className="flex items-center justify-between mb-4 pb-2 border-b">
@@ -186,7 +191,7 @@ export default function SiteHeader({ session }: { session: Session | null }) {
 
               <NavigationMenuItem>
                 <Link href="/#pricing" legacyBehavior passHref>
-                  <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
+                  <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
                     Pricing
                   </NavigationMenuLink>
                 </Link>
@@ -194,9 +199,13 @@ export default function SiteHeader({ session }: { session: Session | null }) {
             </NavigationMenuList>
           </NavigationMenu>
         </div>
+        <ModeToggle />
         {session ? (
           <Button asChild variant={"ghost"}>
             <Link href="/dashboard">
+              <span className="ml-3 text-rose-500 dark:text-white">
+                Dashboard
+              </span>
               <Avatar>
                 <AvatarImage
                   src={session?.user?.image ?? ""}
@@ -206,7 +215,6 @@ export default function SiteHeader({ session }: { session: Session | null }) {
                   {getInitials(session?.user?.name)}
                 </AvatarFallback>
               </Avatar>
-              <span className="ml-3">Dashboard</span>
             </Link>
           </Button>
         ) : (

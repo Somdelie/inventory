@@ -1,5 +1,6 @@
 import {
   Body,
+  Button,
   Container,
   Head,
   Heading,
@@ -13,72 +14,87 @@ import {
 } from "@react-email/components";
 import * as React from "react";
 
-interface AWSVerifyEmailProps {
+interface VerifyEmailProps {
   verificationCode?: string;
 }
 
 export default function VerifyEmail({
   verificationCode = "596853",
-}: AWSVerifyEmailProps) {
+}: VerifyEmailProps) {
   return (
     <Html>
       <Head />
+      <Preview>Your verification code: {verificationCode}</Preview>
       <Body style={main}>
-        <Preview>Email Verification</Preview>
         <Container style={container}>
-          <Section style={coverSection}>
-            <Section style={imageSection}>
-              <h1 className="text-3xl font-bold text-white">
-                Somdelie Inventory
-              </h1>
-            </Section>
-            <Section style={upperSection}>
-              <Heading style={h1}>Verify your Account</Heading>
-              <Text style={mainText}>
-                Thanks for starting the new SOmdelie Inventory account creation
-                process. We want to make sure it's really you. Please enter the
-                following verification code when prompted. If you don&apos;t
-                want to create an account, you can ignore this message.
-              </Text>
-              <Section style={verificationSection}>
-                <Text style={verifyText}>Verification code</Text>
-
-                <Text style={codeText}>{verificationCode}</Text>
-                <Text style={validityText}>
-                  (This code is valid for 10 minutes)
-                </Text>
-              </Section>
-            </Section>
-            <Hr />
-            <Section style={lowerSection}>
-              <Text style={cautionText}>
-                Somdelie Inventory will never email you and ask you to disclose
-                or verify your password, credit card, or banking account number.
-              </Text>
-            </Section>
+          <Section style={logoContainer}>
+            <Img
+              src="https://9tf4o9l5yt.ufs.sh/f/2L7IdLt9oQb12Gd8GVt9oQb1MTkVzGY5hFaiNqne8tPR4lWB"
+              width={180}
+              height={60}
+              alt="Somdelie Inventory"
+              style={logo}
+            />
           </Section>
-          <Text style={footerText}>
-            This message was produced and distributed by Somdelie Inventory,
-            Inc., 410 Terry Ave. North, Seattle, WA 98109. © 2022, Somdelie
-            Inventory, Inc.. All rights reserved. Somdelie Inv is a registered
-            trademark of{" "}
-            <Link
-              href="https:/somdelieinventory.com"
-              target="_blank"
-              style={link}
-            >
-              somdelieinventory.com
-            </Link>
-            , Inc. View our{" "}
-            <Link
-              href="https://somdelieinventory.com"
-              target="_blank"
-              style={link}
-            >
-              privacy policy
-            </Link>
-            .
-          </Text>
+
+          <Section style={contentContainer}>
+            <Heading style={h1}>Verify Your Email Address</Heading>
+
+            <Text style={paragraph}>
+              Thanks for starting the Somdelie Inventory account creation
+              process. To complete your registration, please enter the
+              verification code below when prompted.
+            </Text>
+
+            <Section style={codeContainer}>
+              <Text style={codeLabel}>Your verification code</Text>
+              <Text style={code}>{verificationCode}</Text>
+              <Text style={codeExpiry}>This code expires in 10 minutes</Text>
+            </Section>
+
+            <Text style={paragraph}>
+              If you didn't request this code, you can safely ignore this email.
+            </Text>
+
+            <Hr style={divider} />
+
+            <Text style={securityNote}>
+              <strong>Security tip:</strong> Somdelie Inventory will never ask
+              you to share your password or verification code via email, phone,
+              or message.
+            </Text>
+          </Section>
+
+          <Section style={footer}>
+            <Text style={footerText}>
+              © {new Date().getFullYear()} Somdelie Inventory. All rights
+              reserved.
+            </Text>
+            <Text style={footerLinks}>
+              <Link
+                href="https://somdelieinventory.com/privacy"
+                style={footerLink}
+              >
+                Privacy Policy
+              </Link>{" "}
+              •
+              <Link
+                href="https://somdelieinventory.com/terms"
+                style={footerLink}
+              >
+                {" "}
+                Terms of Service
+              </Link>{" "}
+              •
+              <Link
+                href="https://somdelieinventory.com/contact"
+                style={footerLink}
+              >
+                {" "}
+                Contact Us
+              </Link>
+            </Text>
+          </Section>
         </Container>
       </Body>
     </Html>
@@ -86,88 +102,121 @@ export default function VerifyEmail({
 }
 
 const main = {
-  backgroundColor: "#fff",
-  color: "#212121",
+  backgroundColor: "#f5f5f5",
+  fontFamily:
+    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+  padding: "20px 0",
 };
 
 const container = {
-  padding: "20px",
+  maxWidth: "600px",
   margin: "0 auto",
-  backgroundColor: "#eee",
+  backgroundColor: "#ffffff",
+  borderRadius: "8px",
+  overflow: "hidden",
+  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+};
+
+const logoContainer = {
+  backgroundColor: "#000000",
+  padding: "24px 0",
+  textAlign: "center" as const,
+};
+
+const logo = {
+  margin: "0 auto",
+};
+
+const contentContainer = {
+  padding: "32px 40px",
 };
 
 const h1 = {
-  color: "#333",
-  fontFamily:
-    "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
-  fontSize: "20px",
-  fontWeight: "bold",
-  marginBottom: "15px",
+  color: "#111111",
+  fontSize: "24px",
+  fontWeight: "600",
+  lineHeight: "32px",
+  margin: "0 0 24px 0",
+  textAlign: "center" as const,
 };
 
-const link = {
-  color: "#2754C5",
-  fontFamily:
-    "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
+const paragraph = {
+  color: "#444444",
+  fontSize: "16px",
+  lineHeight: "24px",
+  margin: "0 0 24px 0",
+};
+
+const codeContainer = {
+  background: "#f9f9f9",
+  borderRadius: "8px",
+  padding: "24px",
+  margin: "32px 0",
+  textAlign: "center" as const,
+  border: "1px solid #f0f0f0",
+};
+
+const codeLabel = {
+  color: "#666666",
   fontSize: "14px",
-  textDecoration: "underline",
+  fontWeight: "500",
+  margin: "0 0 8px 0",
 };
 
-const text = {
-  color: "#333",
-  fontFamily:
-    "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
+const code = {
+  color: "#f43f5e", // rose-500
+  fontSize: "36px",
+  fontWeight: "700",
+  letterSpacing: "4px",
+  margin: "16px 0",
+  padding: "8px 0",
+  borderRadius: "4px",
+};
+
+const codeExpiry = {
+  color: "#666666",
   fontSize: "14px",
-  margin: "24px 0",
+  fontStyle: "italic",
+  margin: "8px 0 0 0",
 };
 
-const imageSection = {
-  backgroundColor: "#252f3d",
-  display: "flex",
-  padding: "20px 0",
-  alignItems: "center",
-  justifyContent: "center",
+const divider = {
+  border: "none",
+  borderTop: "1px solid #eaeaea",
+  margin: "32px 0",
 };
 
-const coverSection = { backgroundColor: "#fff" };
+const securityNote = {
+  backgroundColor: "#fff8f8",
+  border: "1px solid #ffebeb",
+  borderLeft: "4px solid #f43f5e", // rose-500
+  borderRadius: "4px",
+  color: "#444444",
+  fontSize: "14px",
+  lineHeight: "20px",
+  padding: "16px",
+  margin: "24px 0 0 0",
+};
 
-const upperSection = { padding: "25px 35px" };
-
-const lowerSection = { padding: "25px 35px" };
+const footer = {
+  backgroundColor: "#f9f9f9",
+  padding: "24px 40px",
+  textAlign: "center" as const,
+};
 
 const footerText = {
-  ...text,
-  fontSize: "12px",
-  padding: "0 20px",
+  color: "#666666",
+  fontSize: "14px",
+  margin: "0 0 16px 0",
 };
 
-const verifyText = {
-  ...text,
-  margin: 0,
-  fontWeight: "bold",
-  textAlign: "center" as const,
+const footerLinks = {
+  color: "#666666",
+  fontSize: "14px",
+  margin: "0",
 };
 
-const codeText = {
-  ...text,
-  fontWeight: "bold",
-  fontSize: "36px",
-  margin: "10px 0",
-  textAlign: "center" as const,
+const footerLink = {
+  color: "#f43f5e", // rose-500
+  textDecoration: "none",
 };
-
-const validityText = {
-  ...text,
-  margin: "0px",
-  textAlign: "center" as const,
-};
-
-const verificationSection = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const mainText = { ...text, marginBottom: "14px" };
-
-const cautionText = { ...text, margin: "0px" };

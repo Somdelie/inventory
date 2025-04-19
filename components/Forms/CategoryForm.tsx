@@ -1,160 +1,126 @@
 "use client";
-
+import { createBrand } from "@/actions/brands";
+import { createCategory } from "@/actions/categories";
+import TextInput from "@/components/FormInputs/TextInput";
 import { Button } from "@/components/ui/button";
+import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-
-import { useRouter } from "next/navigation";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { generateSlug } from "@/lib/generateSlug";
+import { Check, LayoutGrid, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
-import { generateSlug } from "@/lib/generateSlug";
-import toast from "react-hot-toast";
-import { Category } from "@prisma/client";
-import { CategoryProps } from "@/types/types";
-import FormHeader from "./FormHeader";
-import TextInput from "../FormInputs/TextInput";
-import TextArea from "../FormInputs/TextAreaInput";
-import ImageInput from "../FormInputs/ImageInput";
-import FormFooter from "./FormFooter";
-import { createCategory, updateCategoryById } from "@/actions/categories";
+export type CategoryFormProps = {
+  id: string;
+  title: string;
+  description: string;
+  organizationId: string;
+  slug: string;
+  imageUrl: string;
+};
 
-export type SelectOptionProps = {
-  label: string;
-  value: string;
-};
-type CategoryFormProps = {
-  editingId?: string | undefined;
-  initialData?: Category | undefined | null;
-};
-export default function CategoryForm({
-  editingId,
-  initialData,
-}: CategoryFormProps) {
+export function CategoryForm({ organizationId }: { organizationId: string }) {
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CategoryProps>({
-    defaultValues: {
-      title: initialData?.title,
-      description: initialData?.description || "",
-    },
-  });
-  const router = useRouter();
+  } = useForm<CategoryFormProps>();
 
-  const [loading, setLoading] = useState(false);
-  const initialImage = initialData?.imageUrl || "/placeholder.svg";
-  const [imageUrl, setImageUrl] = useState(initialImage);
-
-  async function saveCategory(data: CategoryProps) {
+  const saveBrand = async (data: CategoryFormProps) => {
+    console.log(data);
+    data.organizationId = organizationId;
+    data.slug = generateSlug(data.title);
     try {
       setLoading(true);
-      data.slug = generateSlug(data.title);
-      data.imageUrl = imageUrl;
-
-      if (editingId) {
-        await updateCategoryById(editingId, data);
+      const res = await createCategory(data);
+      // console.log(res, "this is the response");
+      if (res?.status === 200) {
         setLoading(false);
-        // Toast
-        toast.success("Updated Successfully!");
-        //reset
+        toast.success(res?.message, {
+          style: {
+            background: "green",
+            color: "#fff",
+          },
+        });
+        window.location.reload();
         reset();
-        //route
-        router.push("/dashboard/categories");
-        setImageUrl("/placeholder.svg");
+        setOpen(false);
       } else {
-        await createCategory(data);
         setLoading(false);
-        // Toast
-        toast.success("Successfully Created!");
-        //reset
-        reset();
-        setImageUrl("/placeholder.svg");
-        //route
-        router.push("/dashboard/categories");
+        toast.error(res?.message, {
+          style: {
+            background: "#EF4444",
+            color: "#fff",
+          },
+        });
+        return;
       }
+      setLoading(false);
     } catch (error) {
       setLoading(false);
       console.log(error);
+      toast.error("Something went wrong");
+      return;
     }
-  }
-  // async function handleDeleteAll() {
-  // setLoading(true);
-  // try {
-  // await deleteManyCategories();
-  // setLoading(false);
-  // } catch (error) {
-  // console.log(error);
-  // }
-  // }
-  console.log(status);
-
+  };
   return (
-    <form className="" onSubmit={handleSubmit(saveCategory)}>
-      <FormHeader
-        href="/categories"
-        parent=""
-        title="Category"
-        editingId={editingId}
-        loading={loading}
-      />
-
-      <div className="grid grid-cols-12 gap-6 py-8">
-        <div className="lg:col-span-8 col-span-full space-y-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>Category Title</CardTitle>
-              <CardDescription>
-                Lipsum dolor sit amet, consectetur adipiscing elit
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-6">
-                <div className="grid gap-3">
-                  <TextInput
-                    register={register}
-                    errors={errors}
-                    label="Category Title"
-                    name="title"
-                  />
-                </div>
-                <div className="grid gap-3">
-                  <TextArea
-                    register={register}
-                    errors={errors}
-                    label="Description"
-                    name="description"
-                  />
-                </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="h-8 gap-1">
+          <LayoutGrid className="h-4 w-4" />
+          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+            Add New Category
+          </span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[625px]">
+        <DialogHeader>
+          <DialogTitle></DialogTitle>
+        </DialogHeader>
+        <Card className="w-full ">
+          <CardHeader>
+            <CardTitle>Add New Category</CardTitle>
+          </CardHeader>
+          <CardFooter className="flex flex-col gap-4">
+            <form className="flex flex-col w-full gap-2">
+              <div className="grid gap-3">
+                <TextInput
+                  register={register}
+                  errors={errors}
+                  label="Category Title"
+                  placeholder="e.g. Electronics"
+                  name="title"
+                />
               </div>
-            </CardContent>
-          </Card>
-        </div>
-        <div className="lg:col-span-4 col-span-full ">
-          <div className="grid auto-rows-max items-start gap-4 ">
-            <ImageInput
-              title="Category Image"
-              imageUrl={imageUrl}
-              setImageUrl={setImageUrl}
-              endpoint="categoryImage"
-            />
-          </div>
-        </div>
-      </div>
-      <FormFooter
-        href="/categories"
-        editingId={editingId}
-        loading={loading}
-        title="Category"
-        parent=""
-      />
-    </form>
+              {loading ? (
+                <Button disabled>
+                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                  Please wait...
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleSubmit(saveBrand)}
+                  className="w-full"
+                  type="submit"
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  Save Category
+                </Button>
+              )}
+            </form>
+          </CardFooter>
+        </Card>
+      </DialogContent>
+    </Dialog>
   );
 }

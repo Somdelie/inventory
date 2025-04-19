@@ -14,7 +14,7 @@ const HubStackLogo = ({
     gradientStart: isDark ? "#60a5fa" : "#2563eb",
     gradientEnd: isDark ? "#818cf8" : "#4f46e5",
     textPrimary: isDark ? "#ffffff" : "#1e293b",
-    textSecondary: isDark ? "#60a5fa" : "#3b82f6",
+    textSecondary: isDark ? "#60a5fa" : "#f43f5e",
     tagline: isDark ? "#94a3b8" : "#64748b",
   };
 
@@ -78,8 +78,8 @@ const HubStackLogo = ({
           fontSize="48"
           fill={colors.textPrimary}
         >
-          Hub
-          <tspan fill={colors.textSecondary}>Stack</tspan>
+          Somdelie
+          <tspan fill={colors.textSecondary}>Inventory</tspan>
         </text>
 
         {/* Tagline */}
@@ -87,10 +87,10 @@ const HubStackLogo = ({
           x="123"
           y="90"
           fontFamily="Arial, sans-serif"
-          fontSize="14"
+          fontSize="16"
           fill={colors.tagline}
         >
-          Premium Developer Toolkit
+          Smart Inventory Management Solution
         </text>
       </svg>
     </div>

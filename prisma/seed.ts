@@ -1,76 +1,9 @@
+import { adminPermissions, userPermissions } from "@/config/permissions";
 import { db } from "./db";
 import bcrypt from "bcryptjs";
 
 // Get current year for password generation
 const currentYear = new Date().getFullYear();
-
-// Define all possible permissions
-const allPermissions = [
-  "dashboard.create",
-  "dashboard.read",
-  "dashboard.update",
-  "dashboard.delete",
-
-  "users.create",
-  "users.read",
-  "users.update",
-  "users.delete",
-
-  "roles.create",
-  "roles.read",
-  "roles.update",
-  "roles.delete",
-
-  "sales.create",
-  "sales.read",
-  "sales.update",
-  "sales.delete",
-
-  "customers.create",
-  "customers.read",
-  "customers.update",
-  "customers.delete",
-
-  "orders.create",
-  "orders.read",
-  "orders.update",
-  "orders.delete",
-
-  "reports.create",
-  "reports.read",
-  "reports.update",
-  "reports.delete",
-
-  "settings.create",
-  "settings.read",
-  "settings.update",
-  "settings.delete",
-
-  "categories.create",
-  "categories.read",
-  "categories.update",
-  "categories.delete",
-
-  "products.create",
-  "products.read",
-  "products.update",
-  "products.delete",
-
-  "blogs.create",
-  "blogs.read",
-  "blogs.update",
-  "blogs.delete",
-];
-
-// Define user role permissions (basic access)
-const userPermissions = [
-  "dashboard.read",
-  "profile.read",
-  "profile.update",
-  "products.read",
-  "orders.read",
-  "orders.create",
-];
 
 async function cleanDatabase() {
   console.log("Cleaning up existing data...");
@@ -140,13 +73,6 @@ async function seedDatabase() {
       data: {
         name: "Developer Organization",
         slug: "developer-org",
-        industry: "Technology",
-        country: "South Africa",
-        city: "Johannesburg",
-        address: "123 Main Street",
-        phone: "+27 123 456 7890",
-        email: "info@cautiousndlovu.co.za",
-        website: "https://cautiousndlovu.co.za",
         currency: "ZAR",
         timezone: "Africa/Johannesburg",
         fisicalYear: "January-December",
@@ -157,13 +83,6 @@ async function seedDatabase() {
       data: {
         name: "Regular User Organization",
         slug: "regular-user-org",
-        industry: "Consumer",
-        country: "South Africa",
-        city: "Cape Town",
-        address: "456 User Street",
-        phone: "+27 098 765 4321",
-        email: "contact@user-org.com",
-        website: "https://user-org.com",
         currency: "ZAR",
         timezone: "Africa/Johannesburg",
         fisicalYear: "January-December",
@@ -177,7 +96,8 @@ async function seedDatabase() {
         displayName: "Administrator",
         roleName: "admin",
         description: "Full system access",
-        permissions: allPermissions,
+        permissions: adminPermissions,
+        organizationId: adminOrg.id,
       },
     });
 
@@ -189,6 +109,7 @@ async function seedDatabase() {
         roleName: "user",
         description: "Basic user access",
         permissions: userPermissions,
+        organizationId: userOrg.id,
       },
     });
 

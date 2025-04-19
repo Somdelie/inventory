@@ -55,9 +55,7 @@ async function getOrCreateDefaultOrganization(userEmail: string) {
       data: {
         name: `${emailName}'s Organization`,
         slug: slug,
-        industry: "Not Specified",
         country: "Not Specified",
-        email: userEmail,
       },
     });
   } catch (error) {

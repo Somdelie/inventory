@@ -103,6 +103,7 @@ export async function createRole(data: RoleFormData) {
         roleName: createRoleName(data.displayName),
         description: data.description,
         permissions: data.permissions,
+        organizationId: data.organizationId,
       },
     });
 
@@ -208,11 +209,14 @@ export async function deleteRole(id: string) {
   }
 }
 
-export async function getRoles() {
+export async function getOrgRoles(organizationId: string) {
   try {
     const roles = await db.role.findMany({
       orderBy: {
         createdAt: "desc",
+      },
+      where: {
+        organizationId,
       },
     });
     return { success: true, data: roles };

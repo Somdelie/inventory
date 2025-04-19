@@ -67,7 +67,8 @@ export default function LoginForm() {
           <div className="grid gap-2  mt-10 md:mt-0">
             <h1 className="text-3xl font-bold">Login to your Account</h1>
             <p className="text-muted-foreground text-sm">
-              Welcome Back to <span className="text-blue-600">Next Admin</span>
+              Welcome Back to{" "}
+              <span className="text-rose-600">Somdelie Inventory</span>
             </p>
           </div>
           <div className="">
@@ -101,35 +102,11 @@ export default function LoginForm() {
                 />
               </div>
             </form>
-            <div className="flex items-center py-4 justify-center space-x-1 text-slate-900">
-              <div className="h-[1px] w-full bg-slate-200"></div>
-              <div className="uppercase">Or</div>
-              <div className="h-[1px] w-full bg-slate-200"></div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Button
-                onClick={() => signIn("google")}
-                variant={"outline"}
-                className="w-full"
-              >
-                <FaGoogle className="mr-2 w-6 h-6 text-red-500" />
-                Login with Google
-              </Button>
-              <Button
-                onClick={() => signIn("github")}
-                variant={"outline"}
-                className="w-full"
-              >
-                <FaGithub className="mr-2 w-6 h-6 text-slate-900 dark:text-white" />
-                Login with Github
-              </Button>
-            </div>
             <p className="mt-6  text-sm text-gray-500">
               Not a Registered ?{" "}
               <Link
                 href="/register"
-                className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
+                className="font-semibold leading-6 text-rose-600 hover:text-rose-500"
               >
                 Create Account
               </Link>

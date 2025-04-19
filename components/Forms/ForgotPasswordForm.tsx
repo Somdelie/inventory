@@ -98,8 +98,8 @@ export default function ForgotPasswordForm() {
 
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <div className="flex items-start space-x-3">
-                    <Mail className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-blue-800">
+                    <Mail className="h-5 w-5 text-rose-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-rose-800">
                       <p>
                         The email might take a few minutes to arrive. Don't
                         forget to check your spam folder!

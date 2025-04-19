@@ -14,116 +14,114 @@ export type ModulePermissions = {
 };
 
 export const permissions: ModulePermissions[] = [
-  {
-    display: "Dashboard",
-    name: "dashboard",
-    permissions: {
-      create: "dashboard.create",
-      read: "dashboard.read",
-      update: "dashboard.update",
-      delete: "dashboard.delete",
-    },
+  "dashboard",
+  "users",
+  "roles",
+  "sales",
+  "customers",
+  "orders",
+  "reports",
+  "settings",
+  "categories",
+  "products",
+  "blogs",
+  "taxes",
+  "brands",
+  "units",
+].map((name) => ({
+  display: name.charAt(0).toUpperCase() + name.slice(1),
+  name,
+  permissions: {
+    create: `${name}.create`,
+    read: `${name}.read`,
+    update: `${name}.update`,
+    delete: `${name}.delete`,
   },
-  {
-    display: "Users",
-    name: "users",
-    permissions: {
-      create: "users.create",
-      read: "users.read",
-      update: "users.update",
-      delete: "users.delete",
-    },
-  },
-  {
-    display: "Roles",
-    name: "roles",
-    permissions: {
-      create: "roles.create",
-      read: "roles.read",
-      update: "roles.update",
-      delete: "roles.delete",
-    },
-  },
-  {
-    display: "Sales",
-    name: "sales",
-    permissions: {
-      create: "sales.create",
-      read: "sales.read",
-      update: "sales.update",
-      delete: "sales.delete",
-    },
-  },
-  {
-    display: "Customers",
-    name: "customers",
-    permissions: {
-      create: "customers.create",
-      read: "customers.read",
-      update: "customers.update",
-      delete: "customers.delete",
-    },
-  },
-  {
-    display: "Orders",
-    name: "orders",
-    permissions: {
-      create: "orders.create",
-      read: "orders.read",
-      update: "orders.update",
-      delete: "orders.delete",
-    },
-  },
-  {
-    display: "Reports",
-    name: "reports",
-    permissions: {
-      create: "reports.create",
-      read: "reports.read",
-      update: "reports.update",
-      delete: "reports.delete",
-    },
-  },
-  {
-    display: "Settings",
-    name: "settings",
-    permissions: {
-      create: "settings.create",
-      read: "settings.read",
-      update: "settings.update",
-      delete: "settings.delete",
-    },
-  },
-  {
-    display: "Categories",
-    name: "categories",
-    permissions: {
-      create: "categories.create",
-      read: "categories.read",
-      update: "categories.update",
-      delete: "categories.delete",
-    },
-  },
-  {
-    display: "Products",
-    name: "products",
-    permissions: {
-      create: "products.create",
-      read: "products.read",
-      update: "products.update",
-      delete: "products.delete",
-    },
-  },
-  {
-    display: "Blogs",
-    name: "blogs",
-    permissions: {
-      create: "blogs.create",
-      read: "blogs.read",
-      update: "blogs.update",
-      delete: "blogs.delete",
-    },
-  },
+}));
+
+export const adminPermissions = [
+  "dashboard.create",
+  "dashboard.read",
+  "dashboard.update",
+  "dashboard.delete",
+
+  "users.create",
+  "users.read",
+  "users.update",
+  "users.delete",
+
+  "roles.create",
+  "roles.read",
+  "roles.update",
+  "roles.delete",
+
+  "sales.create",
+  "sales.read",
+  "sales.update",
+  "sales.delete",
+
+  "customers.create",
+  "customers.read",
+  "customers.update",
+  "customers.delete",
+
+  "orders.create",
+  "orders.read",
+  "orders.update",
+  "orders.delete",
+
+  "reports.create",
+  "reports.read",
+  "reports.update",
+  "reports.delete",
+
+  "settings.access",
+  "settings.create",
+  "settings.read",
+  "settings.update",
+  "settings.delete",
+
+  "taxes.create",
+  "taxes.read",
+  "taxes.update",
+  "taxes.delete",
+
+  "brands.create",
+  "brands.read",
+  "brands.update",
+  "brands.delete",
+
+  "units.create",
+  "units.read",
+  "units.update",
+  "units.delete",
+
+  "categories.create",
+  "categories.read",
+  "categories.update",
+  "categories.delete",
+
+  "products.create",
+  "products.read",
+  "products.update",
+  "products.delete",
+
+  "blogs.create",
+  "blogs.read",
+  "blogs.update",
+  "blogs.delete",
+];
+
+export const userPermissions = [
+  "dashboard.read",
+  "profile.read",
+  "profile.update",
+  "products.read",
+  "orders.read",
+  "orders.create",
+  "taxes.read",
+  "categories.read",
+  "customers.read",
 ];
 
 // Helper function to get all permission strings

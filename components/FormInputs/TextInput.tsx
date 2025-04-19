@@ -14,6 +14,7 @@ type TextInputProps = {
   errors: any;
   label: string;
   type?: string;
+  step?: string; // Added step property
   name: string;
   toolTipText?: string;
   unit?: string;

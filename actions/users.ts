@@ -1,44 +1,66 @@
 "use server";
-import { ResetPasswordEmail } from "@/components/email-templates/reset-password";
 import { db } from "@/prisma/db";
-import { UserProps } from "@/types/types";
+import type {
+  InvitedUserProps,
+  OrganizationProps,
+  UserProps,
+} from "@/types/types";
 import bcrypt, { compare } from "bcryptjs";
-import { revalidatePath } from "next/cache";
-import { PasswordProps } from "@/components/Forms/ChangePasswordForm";
 import { Resend } from "resend";
-import { generateToken } from "@/lib/token";
 import { generateOTP } from "@/lib/generateOTP";
 import VerifyEmail from "@/components/email-templates/verify-email";
+import ResetPasswordEmail from "@/components/email-templates/reset-password";
+import { generateToken } from "@/lib/token";
+import { revalidatePath } from "next/cache";
+import { PasswordProps } from "@/components/Forms/ChangePasswordForm";
+import { adminPermissions, userPermissions } from "@/config/permissions";
+import { UserInvitationData } from "@/components/Forms/users/UserInvitationForm";
+import UserInvitation from "@/components/email-templates/user-invite";
 // import { generateNumericToken } from "@/lib/token";
 const resend = new Resend(process.env.RESEND_API_KEY);
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+
+// admin role
+const ADMIN_USER_ROLE = {
+  displayName: "Administrator",
+  roleName: "admin",
+  description: "Admin role with full permissions",
+  permissions: adminPermissions,
+};
 
 const DEFAULT_USER_ROLE = {
   displayName: "User",
   roleName: "user",
   description: "Default user role with basic permissions",
-  permissions: [
-    "dashboard.read",
-    "profile.read",
-    "profile.update",
-    "orders.read",
-  ],
+  permissions: userPermissions,
 };
 
-export async function createUser(data: UserProps) {
+// Make organizationData parameter optional with a default value
+export async function createUser(
+  data: UserProps,
+  organizationData?: OrganizationProps
+) {
   const {
     email,
     password,
     firstName,
     lastName,
-    name,
     phone,
     image,
-    organizationId,
     country,
+    state,
+    city,
+    address,
   } = data;
 
+  // Combine firstName and lastName to create the name field
+  const name = `${firstName} ${lastName}`.trim();
+
   try {
+    // If no organizationData is provided, use existing organization ID from the user data
+    // or create a minimal organization if needed
+    const useExistingOrg = !organizationData;
+
     // Use a transaction for atomic operations
     return await db.$transaction(async (tx) => {
       // Check for existing users
@@ -66,46 +88,63 @@ export async function createUser(data: UserProps) {
         };
       }
 
+      let organization;
+
+      // If organizationData is provided, create or use that organization
+      if (!useExistingOrg) {
+        // Check for existing organization
+        const existingOrganization = await tx.organization.findUnique({
+          where: { slug: organizationData.slug },
+        });
+
+        if (existingOrganization) {
+          return {
+            error: `This organization ${organizationData.name} is already in use`,
+            status: 409,
+            data: null,
+          };
+        }
+
+        // Create organization with only the fields that exist in the schema
+        const organizationDataForPrisma = {
+          name: organizationData.name,
+          slug: organizationData.slug,
+          country: organizationData.country,
+          currency: organizationData.currency,
+          timezone: organizationData.timezone,
+        };
+
+        //create organization
+        organization = await tx.organization.create({
+          data: organizationDataForPrisma,
+        });
+      } else {
+        // If user is being added to an existing organization, get the first available one
+        // or create a default one if needed
+        organization =
+          (await tx.organization.findFirst()) ||
+          (await tx.organization.create({
+            data: {
+              name: "Default Organization",
+              slug: "default-org",
+              country: "Not Specified",
+              currency: "USD",
+              timezone: "UTC",
+            },
+          }));
+      }
+
       // Find or create default role
       let defaultRole = await tx.role.findFirst({
-        where: { roleName: DEFAULT_USER_ROLE.roleName },
+        where: { roleName: ADMIN_USER_ROLE.roleName },
       });
 
       // Create default role if it doesn't exist
       if (!defaultRole) {
         defaultRole = await tx.role.create({
-          data: DEFAULT_USER_ROLE,
-        });
-      }
-
-      // Check if organization exists
-      let organization;
-      if (organizationId) {
-        organization = await tx.organization.findUnique({
-          where: { id: organizationId },
-        });
-
-        if (!organization) {
-          return {
-            error: `Organization not found`,
-            status: 404,
-            data: null,
-          };
-        }
-      } else {
-        // Create a default organization for the user
-        const emailPrefix = email.split("@")[0];
-        const orgName = `${name}'s Organization`;
-        const slug = `${emailPrefix}-org`
-          .toLowerCase()
-          .replace(/[^a-z0-9-]/g, "-");
-
-        organization = await tx.organization.create({
           data: {
-            name: orgName,
-            slug,
-            country: country || "Not Specified",
-            industry: "Not Specified",
+            ...ADMIN_USER_ROLE,
+            organizationId: organization.id,
           },
         });
       }
@@ -115,30 +154,32 @@ export async function createUser(data: UserProps) {
 
       // Generate a 6 digit token for email verification
       const token = generateOTP();
-      // Create user with role and organization
+
+      // Create user with role
       const newUser = await tx.user.create({
         data: {
           email,
           password: hashedPassword,
           firstName,
           lastName,
-          name,
+          name, // Add the combined name field
+          country,
+          state,
+          city,
+          address,
           phone,
           token,
           image,
+          organizationId: organization.id,
+          organizationName: organization.name,
           roles: {
             connect: {
               id: defaultRole.id,
             },
           },
-          Organization: {
-            connect: {
-              id: organization.id,
-            },
-          },
         },
         include: {
-          roles: true,
+          roles: true, // Include roles in the response
           Organization: true,
         },
       });
@@ -170,6 +211,184 @@ export async function createUser(data: UserProps) {
         data: newUser,
       };
     });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    return {
+      error: `Something went wrong, Please try again`,
+      status: 500,
+      data: null,
+    };
+  }
+}
+
+// create invited user to join organization
+export async function createInvitedUser(data: InvitedUserProps) {
+  const {
+    email,
+    password,
+    firstName,
+    lastName,
+    phone,
+    image,
+    organizationId,
+    roleId,
+    organizationName,
+  } = data;
+
+  // Combine firstName and lastName to create the name field
+  const name = `${firstName} ${lastName}`.trim();
+
+  try {
+    // Use a transaction for atomic operations
+    return await db.$transaction(async (tx) => {
+      // Check for existing users
+      const existingUserByEmail = await tx.user.findUnique({
+        where: { email },
+      });
+
+      const existingUserByPhone = await tx.user.findUnique({
+        where: { phone },
+      });
+
+      if (existingUserByEmail) {
+        return {
+          error: `This email ${email} is already in use`,
+          status: 409,
+          data: null,
+        };
+      }
+
+      if (existingUserByPhone) {
+        return {
+          error: `This Phone number ${phone} is already in use`,
+          status: 409,
+          data: null,
+        };
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create user with role
+      const newUser = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          firstName,
+          lastName,
+          name, // Add the combined name field
+          phone,
+          image,
+          isVerfied: true,
+          organizationId: organizationId,
+          organizationName: organizationName,
+          roles: {
+            connect: {
+              id: roleId,
+            },
+          },
+        },
+        include: {
+          roles: true,
+          Organization: true,
+        },
+      });
+
+      // //update invitation status
+      await tx.invitation.update({
+        where: {
+          email,
+        },
+        data: {
+          status: true,
+        },
+      });
+
+      revalidatePath("/dashboard/users");
+
+      return {
+        error: null,
+        status: 200,
+        data: { id: newUser.id, email: newUser.email },
+      };
+    });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    return {
+      error: `Something went wrong, Please try again`,
+      status: 500,
+      data: null,
+    };
+  }
+}
+
+// send invite to user to join organization
+export async function sendInvite(data: UserInvitationData) {
+  const { email, roleId, organizationId, roleName, organizationName } = data;
+
+  // Combine firstName and lastName to create the name field
+  // const name = `${firstName} ${lastName}`.trim();
+
+  try {
+    //check if user exists
+    const existingUserByEmail = await db.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUserByEmail) {
+      return {
+        error: `This email ${email} is already in use`,
+        status: 409,
+        data: null,
+      };
+    }
+
+    // check if already invited
+    const existingInvitation = await db.invitation.findFirst({
+      where: {
+        email,
+      },
+    });
+
+    if (existingInvitation) {
+      return {
+        error: `This user has already been invited to this organization`,
+        status: 409,
+        data: null,
+      };
+    }
+
+    await db.invitation.create({
+      data: {
+        email,
+        organizationId,
+      },
+    });
+
+    // send email with invitation link
+    const linkUrl = `${baseUrl}/user-invite/${organizationId}?roleId=${roleId}&email=${email}&organizationName=${organizationName}`;
+    const { data, error } = await resend.emails.send({
+      from: "Somdelie Inventory <admin@cautiousndlovu.co.za>",
+      to: email,
+      subject: `Invitation to join ${organizationName} as ${roleName}`,
+      react: UserInvitation({ organizationName, roleName, linkUrl }),
+    });
+
+    if (error) {
+      console.log(error);
+      return {
+        error: error.message,
+        status: 500,
+        data: null,
+      };
+    }
+
+    revalidatePath("/dashboard/users");
+    return {
+      error: null,
+      status: 200,
+      data,
+    };
   } catch (error) {
     console.error("Error creating user:", error);
     return {
@@ -282,8 +501,63 @@ export async function getAllUsers() {
   }
 }
 
+//get users by organization id
+export async function getUsersByOrganizationId(organizationId: string) {
+  console.log(organizationId, "organizationId");
+  try {
+    const users = await db.user.findMany({
+      where: {
+        organizationId,
+      },
+      include: {
+        roles: true,
+        Organization: true, // Include organization data
+      },
+    });
+    return users;
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return [];
+  }
+}
+
+//get all organization invitations by organization id
+export async function getOrganizationInvitations(organizationId: string) {
+  try {
+    const invitations = await db.invitation.findMany({
+      where: {
+        organizationId,
+      },
+      select: {
+        id: true,
+        email: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+    return invitations;
+  } catch (error) {
+    console.error("Error fetching invitations:", error);
+    return [];
+  }
+}
+
 export async function deleteUser(id: string) {
   try {
+    const user = await db.user.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        email: true,
+      },
+    });
+
+    await db.invitation.delete({
+      where: {
+        email: user?.email,
+      },
+    });
     const deleted = await db.user.delete({
       where: {
         id,

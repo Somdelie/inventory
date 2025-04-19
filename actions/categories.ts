@@ -1,93 +1,93 @@
 "use server";
 
+import { api } from "@/config/axios";
 import { db } from "@/prisma/db";
-import { CategoryProps } from "@/types/types";
+import { CategoryDTO } from "@/types/types";
 import { revalidatePath } from "next/cache";
 
-export async function createCategory(data: CategoryProps) {
-  const slug = data.slug;
+//create a new category
+export async function createCategory(data: CategoryDTO) {
   try {
-    const existingCategory = await db.category.findUnique({
+    // Check if the brand already exists
+    const existingCategory = await db.category.findFirst({
       where: {
-        slug,
+        slug: data.slug,
       },
     });
     if (existingCategory) {
-      return existingCategory;
+      return {
+        status: 400,
+        message: "Category already exists",
+        data: null,
+        error: "",
+      };
     }
-    const newCategory = await db.category.create({
-      data,
-    });
-    // console.log(newCategory);
-    revalidatePath("/dashboard/categories");
-    return newCategory;
-  } catch (error) {
-    console.log(error);
-    return null;
-  }
-}
-export async function getAllCategories() {
-  try {
-    const categories = await db.category.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    return categories;
-  } catch (error) {
-    console.log(error);
-    return null;
-  }
-}
-export async function updateCategoryById(id: string, data: CategoryProps) {
-  try {
-    const updatedCategory = await db.category.update({
-      where: {
-        id,
-      },
+    const category = await db.category.create({
       data,
     });
     revalidatePath("/dashboard/categories");
-    return updatedCategory;
-  } catch (error) {
-    console.log(error);
-  }
-}
-export async function getCategoryById(id: string) {
-  try {
-    const category = await db.category.findUnique({
-      where: {
-        id,
-      },
-    });
-    return category;
-  } catch (error) {
-    console.log(error);
-  }
-}
-export async function deleteCategory(id: string) {
-  try {
-    const deletedCategory = await db.category.delete({
-      where: {
-        id,
-      },
-    });
-
     return {
-      ok: true,
-      data: deletedCategory,
+      status: 200,
+      message: "Category created successfully",
+      data: category,
     };
   } catch (error) {
     console.log(error);
+    return null;
   }
 }
-export async function createBulkCategories(categories: CategoryProps[]) {
+
+// get categories by organization id
+export async function getCategoriesByOrganizationId(organizationId: string) {
   try {
-    for (const category of categories) {
-      await createCategory(category);
-    }
+    const response = await api.get(
+      `/organizations/${organizationId}/categories`
+    );
+
+    // Return the categories array directly from the nested data property
+    return response.data.data || [];
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
+}
+
+// delete category by id
+export async function deleteCategory(id: string) {
+  try {
+    const category = await db.category.delete({
+      where: {
+        id,
+      },
+    });
+    revalidatePath("/dashboard/categories");
+    return {
+      status: 200,
+      message: "Category deleted successfully",
+      data: category,
+    };
   } catch (error) {
     console.log(error);
+    return null;
+  }
+}
+// update category by id
+export async function updateCategory(id: string, data: CategoryDTO) {
+  try {
+    const category = await db.category.update({
+      where: {
+        id,
+      },
+      data,
+    });
+    revalidatePath("/dashboard/categories");
+    return {
+      status: 200,
+      message: "Category updated successfully",
+      data: category,
+    };
+  } catch (error) {
+    console.log(error);
+    return null;
   }
 }

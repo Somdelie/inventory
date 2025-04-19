@@ -16,7 +16,8 @@ const Footer = () => {
               <li>
                 <a
                   href="#"
-                  title=""
+                  title="Twitter"
+                  aria-label="Twitter"
                   className="flex items-center justify-center text-white transition-all duration-200 bg-gray-800 rounded-full w-7 h-7 hover:bg-blue-600 focus:bg-blue-600"
                 >
                   <svg
@@ -33,7 +34,8 @@ const Footer = () => {
               <li>
                 <a
                   href="#"
-                  title=""
+                  title="Facebook"
+                  aria-label="Facebook"
                   className="flex items-center justify-center text-white transition-all duration-200 bg-gray-800 rounded-full w-7 h-7 hover:bg-blue-600 focus:bg-blue-600"
                 >
                   <svg
@@ -50,7 +52,7 @@ const Footer = () => {
               <li>
                 <a
                   href="#"
-                  title=""
+                  title="Instagram"
                   className="flex items-center justify-center text-white transition-all duration-200 bg-gray-800 rounded-full w-7 h-7 hover:bg-blue-600 focus:bg-blue-600"
                 >
                   <svg
@@ -69,7 +71,8 @@ const Footer = () => {
               <li>
                 <a
                   href="#"
-                  title=""
+                  title="GitHub"
+                  aria-label="GitHub"
                   className="flex items-center justify-center text-white transition-all duration-200 bg-gray-800 rounded-full w-7 h-7 hover:bg-blue-600 focus:bg-blue-600"
                 >
                   <svg

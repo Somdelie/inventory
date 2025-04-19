@@ -21,44 +21,6 @@ export default async function Page() {
   return (
     <section className="overflow-hidden">
       <HeroSection />
-      {/* Hero Section with improved height and spacing */}
-      {/* <ReUsableHero
-        theme="light"
-        announcement={{
-          text: "Introducing InventoryPro - Launch your inventory system in days",
-        }}
-        title={
-          <>
-            Complete Inventory Management
-            <br />
-            for Growing Businesses
-          </>
-        }
-        mobileTitle="Complete Inventory Management System"
-        subtitle="Get a powerful inventory management solution with real-time stock tracking, multi-location support, sales order processing, and purchase management - everything retailers, wholesalers, and manufacturers need to optimize their inventory operations and boost profitability."
-        buttons={[
-          {
-            label: "Start Free Trial",
-            href: "/register",
-            primary: true,
-          },
-          {
-            label: "View Demo",
-            href: "/#demo",
-          },
-        ]}
-        icons={[
-          { icon: Database, position: "left" }, // Database icon for inventory
-          { icon: BarChart2, position: "right" }, // Chart for analytics/reporting
-          { icon: Package, position: "center" }, // Package for product/inventory focus
-          // { icon: ShoppingCart, position: "bottom-left" }, // Additional icon for retail
-          // { icon: TrendingUp, position: "bottom-right" }, // Additional icon for growth
-        ]}
-        backgroundStyle="neutral"
-        className="min-h-[80vh] py-12"
-        userCount={currentUsers > 10 ? currentUsers : null}
-      /> */}
-
       {/* Trusted By Section */}
       <div className="bg-muted/30 py-6">
         <div className="mx-auto">

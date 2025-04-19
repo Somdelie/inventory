@@ -4,22 +4,21 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const carouselItems = [
   {
-    image: "/images/slide-1.jpg",
-    title: "Simple Monthly Savings,",
-    subtitle: "Join Ronix Savings Group",
+    image: "/images/auth1.jpg",
+    title: "Inventory Management Made Easy",
+    subtitle: "Track Your Stock in Real-Time",
   },
   {
-    image: "/images/slide-2.jpg",
-    title: "Healthy Habits,",
-    subtitle: "Financial & Physical Wellness",
+    image: "/images/auth2.jpg",
+    title: "Smart Analytics Dashboard",
+    subtitle: "Data-Driven Inventory Decisions",
   },
   {
-    image: "/images/slide-3.jpg",
-    title: "End Year Celebration,",
-    subtitle: "Reap Your Rewards in December",
+    image: "/images/auth3.jpg",
+    title: "Seamless Ordering System",
+    subtitle: "Never Run Out of Stock Again",
   },
 ];
-
 export default function CustomCarousel() {
   const [currentSlide, setCurrentSlide] = useState(0);
 

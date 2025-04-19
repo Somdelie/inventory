@@ -11,7 +11,7 @@ datasource db {
 }
 
 model Account {
-  id                String  @id @default(cuid())
+  id                String   @id @default(cuid())
   userId            String
   type              String
   provider          String
@@ -23,6 +23,8 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -35,6 +37,8 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 enum UserRole {
@@ -44,14 +48,16 @@ enum UserRole {
 }
 
 model Role {
-  id          String   @id @default(cuid())
-  displayName String // Human-readable name (e.g., "Store Manager")
-  roleName    String   @unique // System name (e.g., "store_manager")
-  description String?
-  permissions String[] // Array of permission strings
-  users       User[]   @relation("UserRoles")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String        @id @default(cuid())
+  displayName    String // Human-readable name (e.g., "Store Manager")
+  roleName       String        @unique // System name (e.g., "store_manager")
+  description    String?
+  permissions    String[] // Array of permission strings
+  users          User[]        @relation("UserRoles")
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@index([roleName])
 }
@@ -64,8 +70,10 @@ model User {
   phone            String        @unique
   email            String        @unique
   emailVerified    DateTime?
+  isDisabled       Boolean       @default(false)
   image            String?
   jobTitle         String?
+  locationName     String?
   roles            Role[]        @relation("UserRoles") // Updated to support multiple roles
   // role          UserRole  @default(USER)
   password         String?
@@ -86,37 +94,237 @@ model User {
   organizationName String?
   Organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId   String?
+  location         Location?     @relation(fields: [locationId], references: [id])
+  locationId       String?
+}
+
+model Location {
+  id             String        @id @default(cuid())
+  name           String
+  type           LocationType
+  address        String?
+  phone          String?
+  email          String?
+  isActive       Boolean       @default(true)
+  users          User[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  Organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+}
+
+model Item {
+  id                String         @id @default(cuid())
+  name              String
+  slug              String         @unique
+  sku               String         @unique
+  barcode           String?
+  description       String?
+  categoryId        String?
+  salesCount        Int            @default(0)
+  salesTotal        Float          @default(0)
+  category          Category?      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  costPrice         Float          @default(0)
+  sellingPrice      Float          @default(0)
+  quantity          Int            @default(0)
+  minStockLevel     Int            @default(0)
+  maxStockLevel     Int?           @default(0)
+  isActive          Boolean        @default(true)
+  isPublished       Boolean        @default(false)
+  isSerialTracked   Boolean        @default(false)
+  dimensions        String?
+  weight            Float?
+  upc               String?
+  ean               String?
+  mpn               String?
+  isbn              String?
+  thumbnail         String?
+  imageUrls         String[]
+  unitOfMeasure     String? //unit name
+  brandName         String?
+  tax               Float? //tax rate
+  unit              Unit?          @relation(fields: [unitId], references: [id])
+  unitId            String?
+  brand             Brand?         @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brandId           String?
+  taxRate           taxRate?       @relation(fields: [taxRateId], references: [id])
+  taxRateId         String?
+  suppliers         Supplier[]     @relation("ItemSuppliers")
+  supplierRelations ItemSupplier[]
+  SerialNumber      SerialNumber[]
+  Organization      Organization?  @relation(fields: [organizationId], references: [id])
+  organizationId    String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@unique([slug, organizationId])
+  @@unique([sku, organizationId])
+}
+
+enum LocationType {
+  SHOP
+  WAREHOUSE
+  OFFICE
+  VIRTUAL
 }
 
 model Organization {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
-  slug        String   @unique
-  industry    String?
+  slug        String       @unique
   country     String?
-  state       String?
-  city        String?
-  address     String?
-  phone       String?
-  email       String?
-  website     String?
   currency    String?
   timezone    String?
-  startDate   DateTime @default(now())
+  startDate   DateTime     @default(now())
   fisicalYear String?
   users       User[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  invitations Invitation[]
+  units       Unit[]
+  brands      Brand[]
+  categories  Category[]
+  items       Item[]
+  suppliers   Supplier[]
+  locations   Location[]
+  taxRates    taxRate[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  Role        Role[]
+}
+
+model Invitation {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  status         Boolean      @default(false)
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("invitations")
 }
 
 model Category {
-  id          String    @id @default(cuid())
-  title       String
-  slug        String    @unique
-  imageUrl    String?
-  description String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime? @updatedAt
+  id            String     @id @default(cuid())
+  title         String
+  slug          String     @unique
+  imageUrl      String?
+  description   String?
+  parentId      String?
+  parent        Category?  @relation("SubCategories", fields: [parentId], references: [id])
+  subCategories Category[] @relation("SubCategories")
+  items         Item[]
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime?     @updatedAt
+  Organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+}
+
+model Unit {
+  id        String    @id @default(cuid())
+  title     String    @unique
+  symbol    String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  items          Item[]
+  itemId         String?
+  Organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+}
+
+model Brand {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  imageUrl  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  items          Item[]
+  Organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+}
+
+//suppliers model
+model Supplier {
+  id           String    @id @default(cuid())
+  name         String
+  email        String?
+  phone        String?
+  address      String?
+  taxId        String?
+  paymentTerms String?
+  notes        String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime? @updatedAt
+
+  // purchaseOrders PurchaseOrder[]
+  items             Item[]         @relation("ItemSuppliers")
+  supplierRelations ItemSupplier[]
+  Organization      Organization?  @relation(fields: [organizationId], references: [id])
+  organizationId    String?
+}
+
+model ItemSupplier {
+  id               String    @id @default(cuid())
+  itemId           String
+  supplierId       String
+  isPreferred      Boolean   @default(false)
+  supplierSku      String?
+  leadTime         Int?
+  minOrderQty      Int?
+  unitCost         Float?
+  lastPurchaseDate DateTime?
+  notes            String?
+  item             Item      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  supplier         Supplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime? @updatedAt
+
+  @@unique([itemId, supplierId])
+}
+
+model taxRate {
+  id        String    @id @default(cuid())
+  name      String
+  rate      Float
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  items          Item[]
+  Organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+}
+
+model SerialNumber {
+  id              String       @id @default(cuid())
+  serialNumber    String
+  itemId          String
+  status          SerialStatus @default(IN_STOCK)
+  locationId      String?
+  purchaseOrderId String?
+  salesOrderId    String?
+  notes           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime?    @updatedAt
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+enum SerialStatus {
+  IN_STOCK
+  SOLD
+  RETURNED
+  DAMAGED
+  LOST
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
 }
 
 model Saving {

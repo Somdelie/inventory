@@ -2,16 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -20,11 +11,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { deleteSaving } from "@/actions/savings";
 import { deleteUser } from "@/actions/users";
+import { deleteUnit } from "@/actions/unit";
+import { deleteBrand } from "@/actions/brands";
+import { deleteTax } from "@/actions/taxes";
+import { deleteItem } from "@/actions/item";
+import { deleteCategory } from "@/actions/categories";
 
 type ActionColumnProps = {
   row: any;
@@ -39,12 +34,15 @@ export default function ActionColumn({
   editEndpoint,
   id = "",
 }: ActionColumnProps) {
+  const [deleting, setDeleting] = React.useState(false);
   const isActive = row.isActive;
+
   async function handleDelete() {
     try {
-      if (model === "saving") {
-        const res = await deleteSaving(id);
-        if (res?.ok) {
+      setDeleting(true);
+      if (model === "unit") {
+        const res = await deleteUnit(id);
+        if (res?.status === 200) {
           window.location.reload();
         }
         toast.success(`${model} Deleted Successfully`);
@@ -54,67 +52,78 @@ export default function ActionColumn({
           window.location.reload();
         }
         toast.success(`${model} Deleted Successfully`);
+      } else if (model === "brand") {
+        const res = await deleteBrand(id);
+        if (res?.status === 200) {
+          window.location.reload();
+        }
+        toast.success(`${res?.message}`);
+      } else if (model === "tax") {
+        const res = await deleteTax(id);
+        if (res?.status === 200) {
+          window.location.reload();
+        }
+        toast.success(`${model} Deleted Successfully`);
+      } else if (model === "item") {
+        const res = await deleteItem(id);
+        if (res?.status === 200) {
+          window.location.reload();
+        }
+        toast.success(`${model} Deleted Successfully`);
       }
+      setDeleting(false);
     } catch (error) {
       console.log(error);
-      toast.error("Category Couldn't be deleted");
+      setDeleting(false);
+      toast.error("Something went wrong");
     }
   }
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
-          <span className="sr-only">Open menu</span>
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            {/* <DropdownMenuItem className="text-red-600 hover:text-red-700 transition-all duration-500 cursor-pointer">
-              
-            </DropdownMenuItem> */}
-            <Button
-              variant={"ghost"}
-              size={"sm"}
-              className="text-red-600 hover:text-red-700 transition-all duration-500 cursor-pointer "
-            >
-              <Trash className="w-4 h-4  mr-2 flex-shrink-0" />
-              <span>Delete</span>
+    <div className="flex items-center gap-2">
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            variant={"ghost"}
+            size={"icon"}
+            className="text-red-600 hover:text-red-700 transition-all duration-500 cursor-pointer bg-red-300"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this{" "}
+              {model}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button variant={"destructive"} onClick={() => handleDelete()}>
+              {deleting ? (
+                <span className="flex items-center space-x-1">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Deleting...</span>
+                </span>
+              ) : (
+                "Permanently Delete"
+              )}
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete this{" "}
-                {model}.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <Button variant={"destructive"} onClick={() => handleDelete()}>
-                Permanently Delete
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        {/* <DropdownMenuItem
-          className="text-red-600 hover:text-red-700 transition-all duration-500 cursor-pointer"
-          onClick={() => handleDelete()}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>{" "}
+      {editEndpoint && (
+        <Button
+          variant={"ghost"}
+          size={"icon"}
+          className="text-sky-600 hover:text-sky-700 transition-all duration-500 cursor-pointer bg-sky-300"
         >
-          <Trash className="w-4 h-4  mr-2 flex-shrink-0" />
-          <span>Delete</span>
-        </DropdownMenuItem> */}
-        <DropdownMenuItem>
-          <Link href={editEndpoint} className="flex item gap-2">
+          <Link href={editEndpoint} className="text-sky-600 hover:text-sky-700">
             <Pencil className="w-4 h-4 " />
-            <span>Edit</span>
           </Link>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </Button>
+      )}
+    </div>
   );
 }

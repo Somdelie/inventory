@@ -13,6 +13,18 @@ export type SavingProps = {
   userId: string;
   paymentDate: any;
 };
+export type InvitedUserProps = {
+  name: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  image: string;
+  email: string;
+  password: string;
+  organizationId: string;
+  organizationName: string;
+  roleId: string;
+};
 export type UserProps = {
   name: string;
   firstName: string;
@@ -26,24 +38,16 @@ export type UserProps = {
   city: string;
   address: string;
   organizationName: string;
-  organizationId: string;
-  isNewOrganizationAdmin?: string; // To track if user should become admin of new org
 };
 
 // Add this to your types.ts file or wherever you define UserProps
 
 export interface OrganizationProps {
-  id?: string;
   name: string;
-  slug?: string;
-  industry?: string;
-  country?: string;
-  state?: string;
-  city?: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
+  slug: string;
+  country: string;
+  currency: string;
+  timezone: string;
 }
 
 export type LoginProps = {
@@ -60,6 +64,7 @@ export interface RoleFormData {
   displayName: string;
   description?: string;
   permissions: string[];
+  organizationId: string;
 }
 
 export interface UserWithRoles extends User {
@@ -84,4 +89,50 @@ export interface RoleResponse {
   permissions: string[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface UnitDTO {
+  id: string;
+  title: string;
+  symbol: string;
+}
+
+// BrandDTO
+export interface BrandDTO {
+  id: string;
+  name: string;
+  slug: string;
+  organizationId: string | null;
+}
+
+// CategoryDTO
+export interface CategoryDTO {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  organizationId: string | null;
+  imageUrl: string | null;
+}
+
+export interface ItemDTO {
+  id: string;
+  sku: string;
+  name: string;
+  description: string | null;
+  categoryId: string | null;
+  brandId: string | null;
+  unitId: string | null;
+  taxRateId: string | null;
+  organizationId: string | null;
+  // imageUrl: string | null;
+  // createdAt: Date;
+  // updatedAt: Date;
+}
+
+export interface TaxDTO {
+  id: string;
+  name: string;
+  rate: number;
+  organizationId: string | null;
 }
