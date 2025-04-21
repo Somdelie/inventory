@@ -38,7 +38,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center h-96 p-6 ${className}`}
+      className={`flex flex-col items-center justify-center h-80 p-6 ${className}`}
     >
       <div className="flex flex-col items-center text-center max-w-sm">
         <div className="mb-4">

@@ -63,38 +63,38 @@ model Role {
 }
 
 model User {
-  id               String        @id @default(cuid())
+  id               String       @id @default(cuid())
   name             String
   firstName        String
   lastName         String
-  phone            String        @unique
-  email            String        @unique
+  phone            String       @unique
+  email            String       @unique
   emailVerified    DateTime?
-  isDisabled       Boolean       @default(false)
+  isDisabled       Boolean      @default(false)
   image            String?
   jobTitle         String?
   locationName     String?
-  roles            Role[]        @relation("UserRoles") // Updated to support multiple roles
+  roles            Role[]       @relation("UserRoles") // Updated to support multiple roles
   // role          UserRole  @default(USER)
   password         String?
-  status           Boolean       @default(true)
+  status           Boolean      @default(true)
   accounts         Account[]
   sessions         Session[]
   savings          Saving[]
   blogs            Blog[]
-  isVerfied        Boolean       @default(false)
+  isVerfied        Boolean      @default(false)
   token            String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
   roleId           String?
   country          String?
   state            String?
   city             String?
   address          String?
   organizationName String?
-  Organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId   String?
-  location         Location?     @relation(fields: [locationId], references: [id])
+  organizationId   String
+  Organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  location         Location?    @relation(fields: [locationId], references: [id])
   locationId       String?
 }
 
@@ -189,6 +189,17 @@ model Organization {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   Role        Role[]
+  apiKeys     ApiKey[]
+}
+
+model ApiKey {
+  id             String       @id @default(cuid())
+  name           String
+  key            String       @unique
+  isActive       Boolean      @default(true)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
 }
 
 model Invitation {

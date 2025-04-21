@@ -28,6 +28,7 @@ export const permissions: ModulePermissions[] = [
   "taxes",
   "brands",
   "units",
+  "api keys",
 ].map((name) => ({
   display: name.charAt(0).toUpperCase() + name.slice(1),
   name,
@@ -110,6 +111,11 @@ export const adminPermissions = [
   "blogs.read",
   "blogs.update",
   "blogs.delete",
+
+  "api keys.create",
+  "api keys.read",
+  "api keys.update",
+  "api keys.delete",
 ];
 
 export const userPermissions = [

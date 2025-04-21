@@ -252,7 +252,7 @@ export const sidebarLinks: ISidebarLink[] = [
         permission: "settings.read",
       },
       {
-        title: "API Settings",
+        title: "API Management",
         href: "/dashboard/integrations/api",
         permission: "settings.read",
       },

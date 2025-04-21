@@ -29,7 +29,7 @@ export default function SubmitButton({
           type="button"
           disabled
           className={cn(
-            "items-center flex justify-center rounded-md px-3 py-2 text-sm font-semibold leading-6 text-white shadow-sm  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 cursor-not-allowed",
+            "items-center flex justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold leading-6 text-white shadow-sm  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 cursor-not-allowed",
             className
           )}
         >
