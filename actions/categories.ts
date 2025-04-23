@@ -4,6 +4,7 @@ import { api } from "@/config/axios";
 import { db } from "@/prisma/db";
 import { CategoryDTO } from "@/types/types";
 import { revalidatePath } from "next/cache";
+import { getAPIKey } from "./api-keys";
 
 //create a new category
 export async function createCategory(data: CategoryDTO) {
@@ -38,10 +39,25 @@ export async function createCategory(data: CategoryDTO) {
 }
 
 // get categories by organization id
-export async function getCategoriesByOrganizationId(organizationId: string) {
+export async function getCategoriesByOrganizationId(
+  organizationId: string,
+  params = {}
+) {
   try {
+    const apiKey = await getAPIKey(organizationId);
+    if (!apiKey) {
+      console.error("API key not found for organization:", organizationId);
+      return []; // Return an empty array if API key is not found
+    }
     const response = await api.get(
-      `/organizations/${organizationId}/categories`
+      `/organizations/${organizationId}/categories`,
+      {
+        params,
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": `${apiKey?.data?.key}`,
+        },
+      }
     );
 
     // Return the categories array directly from the nested data property

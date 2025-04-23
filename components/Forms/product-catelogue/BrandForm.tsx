@@ -11,7 +11,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { generateSlug } from "@/lib/generateSlug";
-import { Check, LayoutGrid, Loader2 } from "lucide-react";
+import { Check, LayoutGrid, Loader2, Plus } from "lucide-react";
+import { revalidatePath } from "next/cache";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -23,7 +24,13 @@ export type BrandFormProps = {
   slug: string;
 };
 
-export function BrandForm({ organizationId }: { organizationId: string }) {
+export function BrandForm({
+  organizationId,
+  itemId,
+}: {
+  organizationId: string;
+  itemId: string;
+}) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const {
@@ -37,13 +44,13 @@ export function BrandForm({ organizationId }: { organizationId: string }) {
     console.log(data);
     data.organizationId = organizationId;
     data.slug = generateSlug(data.name);
-    const itemId = "itemId"; // Replace with the actual item ID if needed
     try {
       setLoading(true);
       const res = await createBrand(data, itemId);
       // console.log(res, "this is the response");
       if (res?.status === 200) {
         setLoading(false);
+
         toast.success(res?.message, {
           style: {
             background: "green",
@@ -74,11 +81,8 @@ export function BrandForm({ organizationId }: { organizationId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="h-8 gap-1">
-          <LayoutGrid className="h-4 w-4" />
-          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            Add New Brand
-          </span>
+        <Button className="" size={"icon"} variant={"outline"}>
+          <Plus className="" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[625px]">

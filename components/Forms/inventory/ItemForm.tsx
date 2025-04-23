@@ -2,7 +2,6 @@
 import { createItem } from "@/actions/item";
 import TextInput from "@/components/FormInputs/TextInput";
 import { Button } from "@/components/ui/button";
-import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -28,20 +27,6 @@ import { toast } from "sonner";
 import { generateSlug } from "@/lib/generateSlug";
 import TextArea from "@/components/FormInputs/TextAreaInput";
 import { ItemCreateDTO } from "@/types/itemTypes";
-
-// export type ItemFormProps = {
-//   id: string;
-//   name: string;
-//   slug: string;
-//   sku: string;
-//   description?: string;
-//   quantity?: number;
-//   organizationId: string;
-//   categoryId: string;
-//   brandId: string;
-//   sellingPrice: number;
-//   costPrice: number;
-// };
 
 export function ItemForm({
   organizationId,
@@ -79,13 +64,6 @@ export function ItemForm({
       data.sku = generateSKU(data.name, brandName, categoryName);
       data.slug = generateSlug(data.name);
 
-      // Convert string numbers to actual numbers for Prisma
-      const formattedData = {
-        ...data,
-        sellingPrice: parseFloat(data.sellingPrice as unknown as string),
-        costPrice: parseFloat(data.costPrice as unknown as string),
-        quantity: parseInt(data.quantity as unknown as string, 10),
-      };
 
       const res = await createItem(data, organizationId);
       console.log(res, "this is the response");

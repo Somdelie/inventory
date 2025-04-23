@@ -30,7 +30,7 @@ export default function ImageInput({
             width="300"
           />
           <UploadButton
-            className="col-span-full"
+            className="col-span-full px-4"
             endpoint={endpoint}
             onClientUploadComplete={(res) => {
               // Do something with the response

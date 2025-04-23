@@ -10,13 +10,12 @@ import { getCategoriesByOrganizationId } from "@/actions/categories";
 import { ItemForm } from "@/components/Forms/inventory/ItemForm";
 import { getItemsByOrganizationId } from "@/actions/item";
 import { getBrandsByOrganizationId } from "@/actions/brands";
-import { ItemDTO } from "@/types/itemTypes";
 
 export default async function page() {
   const user = await getAuthenticatedUser();
   const organizationId = user?.organizationId ?? "";
 
-  // Get items - now correctly typed as ItemDTO[]
+  // Get items - now correctly typed as Item
   const items = await getItemsByOrganizationId(organizationId);
 
   const categories = await getCategoriesByOrganizationId(organizationId);

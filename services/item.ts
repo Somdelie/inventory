@@ -4,7 +4,7 @@ import {
   getItemsByOrganizationId,
   updateItem,
 } from "@/actions/item";
-import { ItemCreateDTO, ItemUpdateDTO } from "@/types/itemTypes";
+import { Item, ItemCreateDTO, ItemUpdateDTO } from "@/types/itemTypes";
 
 // Centralized API object for all product-related server actions
 export const itemAPI = {
@@ -28,7 +28,7 @@ export const itemAPI = {
   },
 
   // Update an existing product
-  update: async (id: string, data: ItemUpdateDTO) => {
+  update: async (id: string, data: Item) => {
     const response = await updateItem(data, id); // Pass parameters in this order to match implementation
     if (response?.status !== 200) {
       throw new Error(response?.message || "Failed to update product");

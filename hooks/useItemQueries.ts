@@ -1,5 +1,5 @@
 import { itemAPI } from "@/services/item";
-import { ItemCreateDTO, ItemUpdateDTO } from "@/types/itemTypes";
+import { Item, ItemCreateDTO, ItemUpdateDTO } from "@/types/itemTypes";
 import {
   useQuery,
   useMutation,
@@ -148,7 +148,7 @@ export function useItemUpdate(id: string, organizationId?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: ItemUpdateDTO) => {
+    mutationFn: (data: Item) => {
       // Make sure to include organizationId in the update data
       const updateData = {
         ...data,

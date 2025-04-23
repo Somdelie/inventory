@@ -115,21 +115,6 @@ export interface CategoryDTO {
   imageUrl: string | null;
 }
 
-export interface ItemDTO {
-  id: string;
-  sku: string;
-  name: string;
-  description: string | null;
-  categoryId: string | null;
-  brandId: string | null;
-  unitId: string | null;
-  taxRateId: string | null;
-  organizationId: string | null;
-  // imageUrl: string | null;
-  // createdAt: Date;
-  // updatedAt: Date;
-}
-
 export interface TaxDTO {
   id: string;
   name: string;

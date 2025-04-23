@@ -4,10 +4,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import SortableColumn from "@/components/DataTableColumns/SortableColumn";
 import { ColumnDef } from "@tanstack/react-table";
 import ActionColumn from "@/components/DataTableColumns/ActionColumn";
-import { ItemDTO } from "@/types/itemTypes";
+import { Item } from "@/types/itemTypes";
 
-// Change the type from ItemApiResponse to ItemDTO
-export const columns: ColumnDef<ItemDTO>[] = [
+// Change the type from ItemApiResponse to Item
+export const columns: ColumnDef<Item>[] = [
   {
     id: "select",
     header: ({ table }) => (

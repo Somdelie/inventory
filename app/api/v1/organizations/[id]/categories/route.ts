@@ -1,89 +1,7 @@
 import { db } from "@/prisma/db";
+import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-
-// export async function GET(
-//   request: NextRequest,
-//   { params }: { params: { id: string } }
-// ) {
-//   try {
-//     const organizationId = (await params).id;
-//     const searchParams = request.nextUrl.searchParams;
-
-//     // Check if pagination is requested
-//     const isPaginated = searchParams.has("page") || searchParams.has("limit");
-
-//     // Get total count for pagination metadata
-//     const totalCount = await db.category.count({
-//       where: {
-//         organizationId,
-//       },
-//     });
-
-//     if (isPaginated) {
-//       // Parse pagination parameters with defaults
-//       const page = parseInt(searchParams.get("page") || "1", 10);
-//       const limit = parseInt(searchParams.get("limit") || "10", 10);
-//       const skip = (page - 1) * limit;
-
-//       // Fetch paginated categories
-//       const categories = await db.category.findMany({
-//         where: {
-//           organizationId,
-//         },
-//         include: {
-//           items: true,
-//         },
-//         orderBy: {
-//           title: "asc",
-//         },
-//         skip,
-//         take: limit,
-//       });
-
-//       // Calculate pagination metadata
-//       const totalPages = Math.ceil(totalCount / limit);
-
-//       // Construct response with pagination metadata
-//       const response = {
-//         data: categories,
-//         pagination: {
-//           total: totalCount,
-//           page,
-//           limit,
-//           totalPages,
-//           hasNextPage: page < totalPages,
-//           hasPrevPage: page > 1,
-//         },
-//       };
-
-//       return new Response(JSON.stringify(response), {
-//         status: 200,
-//         headers: { "Content-Type": "application/json" },
-//       });
-//     } else {
-//       // If no pagination parameters, return all data
-//       const allCategories = await db.category.findMany({
-//         where: {
-//           organizationId,
-//         },
-//         include: {
-//           items: true,
-//         },
-//         orderBy: {
-//           title: "asc",
-//         },
-//       });
-
-//       return new Response(JSON.stringify({ data: allCategories }), {
-//         status: 200,
-//         headers: { "Content-Type": "application/json" },
-//       });
-//     }
-//   } catch (error) {
-//     console.error("Error fetching categories:", error);
-//     return new Response("Internal Server Error", { status: 500 });
-//   }
-// }
 
 export async function GET(
   request: NextRequest,
@@ -92,7 +10,21 @@ export async function GET(
   const { id } = await params;
 
   try {
-    const organizationId = id;
+    const headersList = await headers();
+    const apiKey = headersList.get("x-api-key") || "";
+    const organizationId = id; // Get organizationId from params
+
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({
+          data: null,
+          status: 401,
+          error: "API key not found",
+          success: false,
+        })
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
 
     // Check if pagination is requested
@@ -104,6 +36,7 @@ export async function GET(
         organizationId,
       },
     });
+
     if (isPaginated) {
       // Parse pagination parameters with defaults
       const page = parseInt(searchParams.get("page") || "1", 10);
@@ -111,15 +44,19 @@ export async function GET(
       const skip = (page - 1) * limit;
 
       // Fetch paginated categories
-      const categories = await db.category.findMany({
+      const categories = await db.item.findMany({
         where: {
           organizationId,
         },
         include: {
-          items: true,
+          category: true,
+          brand: true,
+          unit: true,
+          taxRate: true,
         },
         orderBy: {
-          title: "asc",
+          // name: "asc",
+          createdAt: "asc",
         },
         skip,
         take: limit,
@@ -139,15 +76,16 @@ export async function GET(
           hasNextPage: page < totalPages,
           hasPrevPage: page > 1,
         },
+        success: true,
       };
 
-      return new Response(JSON.stringify(response), {
+      return new Response(JSON.stringify(response.data), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
     } else {
       // If no pagination parameters, return all data
-      const allCategories = await db.category.findMany({
+      const allCats = await db.category.findMany({
         where: {
           organizationId,
         },
@@ -159,27 +97,87 @@ export async function GET(
         },
       });
 
-      return new Response(JSON.stringify({ data: allCategories }), {
+      console.log("All category fetched:", allCats);
+
+      return new Response(JSON.stringify({ data: allCats }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
     }
   } catch (error) {
-    console.error("Error fetching categories:", error);
+    console.error("Error fetching category:", error);
     return new Response("Internal Server Error", { status: 500 });
   }
 }
 
-export async function POST(request: Request) {
-  // Parse the request body
-  const body = await request.json();
-  const { name } = body;
+// export async function POST(request: Request) {
+//   try {
+//     const body = await request.json();
+//     const { organizationId, ...data } = body; // Destructure organizationId from body
 
-  // e.g. Insert new user into your DB
-  const newUser = { id: Date.now(), name };
+//     const numericSellingPrice =
+//       typeof data.sellingPrice === "string"
+//         ? parseFloat(data.sellingPrice)
+//         : data.sellingPrice;
 
-  return new Response(JSON.stringify(newUser), {
-    status: 201,
-    headers: { "Content-Type": "application/json" },
-  });
-}
+//     const numericCostPrice =
+//       typeof data.costPrice === "string"
+//         ? parseFloat(data.costPrice)
+//         : data.costPrice;
+
+//     const numericQuantity =
+//       typeof data.quantity === "string"
+//         ? parseInt(data.quantity, 10)
+//         : data.quantity;
+
+//     // Check if the item already exists but it can be created with the same name only if the organizationId is different
+//     const existingItem = await db.item.findFirst({
+//       where: {
+//         name: data.name,
+//         organizationId: organizationId,
+//       },
+//     });
+
+//     if (existingItem) {
+//       return new Response(
+//         JSON.stringify({
+//           status: 400,
+//           error: "Item already exists with the same name in this organization",
+//         }),
+//         { status: 400, headers: { "Content-Type": "application/json" } }
+//       );
+//     }
+
+//     // Create a new item with the organizationId included in the data
+//     const newItem = await db.item.create({
+//       data: {
+//         ...data,
+//         sellingPrice: numericSellingPrice,
+//         costPrice: numericCostPrice,
+//         quantity: numericQuantity,
+//         minStockLevel: numericQuantity || 0,
+//         organizationId, // Include organizationId in the item creation
+//       },
+//     });
+
+//     revalidatePath("/dashboard/inventory/items");
+
+//     return new Response(
+//       JSON.stringify({
+//         status: 201,
+//         message: "Item created successfully💐",
+//         data: newItem,
+//       }),
+//       { status: 201, headers: { "Content-Type": "application/json" } }
+//     );
+//   } catch (error: any) {
+//     console.error("Error creating item:", error);
+//     return new Response(
+//       JSON.stringify({
+//         status: 500,
+//         error: error.message || "Failed to create item",
+//       }),
+//       { status: 500, headers: { "Content-Type": "application/json" } }
+//     );
+//   }
+// }

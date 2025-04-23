@@ -1,6 +1,7 @@
 import { db } from "@/prisma/db";
 import { revalidatePath } from "next/cache";
-import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { NextRequest } from "next/server";
 
 export async function GET(
   request: NextRequest,
@@ -9,7 +10,21 @@ export async function GET(
   const { id } = await params;
 
   try {
+    const headersList = await headers();
+    const apiKey = headersList.get("x-api-key") || "";
     const organizationId = id; // Get organizationId from params
+
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({
+          data: null,
+          status: 401,
+          error: "API key not found",
+          success: false,
+        })
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
 
     // Check if pagination is requested

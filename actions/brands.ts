@@ -2,9 +2,9 @@
 import { api } from "@/config/axios";
 import { db } from "@/prisma/db";
 import { BrandDTO } from "@/types/types";
+import { revalidatePath } from "next/cache";
 
-export async function createBrand(data: BrandDTO) {
-  console.log(data, "this is the data");
+export async function createBrand(data: BrandDTO, itemId: string) {
   try {
     // Check if the brand already exists
     const existingBrand = await db.brand.findFirst({
@@ -21,6 +21,7 @@ export async function createBrand(data: BrandDTO) {
     const brand = await db.brand.create({
       data,
     });
+    revalidatePath(`/dashboard/inventory/items/${itemId}`);
     return {
       status: 200,
       message: "Brand created successfully",

@@ -113,3 +113,46 @@ export async function deleteAPIKey(id: string) {
     };
   }
 }
+
+//get single api key by id and organization id
+export async function getAPIKey(organizationId: string) {
+  const user = await getAuthenticatedUser();
+  // Remove this line: const apiKey = await getAPIKey(organizationId!);
+
+  try {
+    if (!user) {
+      return {
+        success: false,
+        data: null,
+        error: "Your Not Authorized",
+      };
+    }
+    const key = await db.apiKey.findFirst({
+      where: {
+        organizationId: organizationId,
+      },
+      select: {
+        key: true,
+      },
+    });
+    if (!key) {
+      return {
+        success: false,
+        data: null,
+        error: "Key not found",
+      };
+    }
+    return {
+      success: true,
+      data: key,
+      error: null,
+    };
+  } catch (error) {
+    console.log(error);
+    return {
+      success: false,
+      data: null,
+      error: "Something went wrong",
+    };
+  }
+}

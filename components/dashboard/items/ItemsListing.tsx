@@ -25,7 +25,7 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import type { ItemCreateDTO, ItemDTO, ItemUpdateDTO } from "@/types/itemTypes";
+import type { Item, ItemCreateDTO } from "@/types/itemTypes";
 import {
   useCreateItem,
   useItemDelete,
@@ -43,7 +43,7 @@ import {
 import { generateSlug } from "@/lib/generateSlug";
 import { generateSKU } from "@/lib/generateSKU";
 import { ImageInput } from "@/components/FormInputs/ThumbnailUpload";
-import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 interface ItemsListingProps {
   title: string;
@@ -68,8 +68,11 @@ export default function ItemsListing({
   brandMap,
 }: ItemsListingProps) {
   // Move this inside a useEffect to prevent state updates during render
-  const [itemsData, setItemsData] = useState<ItemDTO[]>([]);
+  const [itemsData, setItemsData] = useState<Item[]>([]);
   const { items, refetch } = useOrgItems(organizationId);
+
+  // console.log(items, "this is the items data fetched from the server");
+  const router = useRouter();
 
   // Use useEffect to update local state after items are fetched
   useEffect(() => {
@@ -78,15 +81,13 @@ export default function ItemsListing({
     }
   }, [items]);
 
-  const [imageUrl, setImageUrl] = useState(
-    "https://9tf4o9l5yt.ufs.sh/f/2L7IdLt9oQb1C1OOUKyYQeO0fxGr6FUCLoAPEa5yN1i7HuJR"
-  );
+  const [imageUrl, setImageUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [currentItem, setCurrentItem] = useState<ItemDTO | null>(null);
-  const [itemToDelete, setItemToDelete] = useState<ItemDTO | null>(null);
+  const [currentItem, setCurrentItem] = useState<Item | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<Item | null>(null);
 
   // Function to reset the form and close the modal
   const resetFormAndCloseModal = useCallback(() => {
@@ -187,14 +188,12 @@ export default function ItemsListing({
   };
 
   // Export to Excel
-  const handleExport = async (filteredProducts: ItemDTO[]) => {
+  const handleExport = async (filteredProducts: Item[]) => {
     setIsExporting(true);
     try {
       // Prepare data for export
       const exportData = filteredProducts.map((product) => ({
         Name: product.name,
-        "Number Plate": product.numberPlate,
-        Price: product.price,
         "Sales Count": product.salesCount,
         "Total Sales": formatCurrency(product.salesTotal),
         "Date Added": formatDate(product.createdAt),
@@ -231,13 +230,14 @@ export default function ItemsListing({
   };
 
   // Handle edit click
-  const handleEditClick = (item: ItemDTO) => {
-    setCurrentItem(item);
-    setFormDialogOpen(true);
+  const handleEditClick = (item: Item) => {
+    // setCurrentItem(item);
+    // setFormDialogOpen(true);
+    router.push(`/dashboard/inventory/items/${item.id}/edit`);
   };
 
   // Handle delete click
-  const handleDeleteClick = (item: ItemDTO) => {
+  const handleDeleteClick = (item: Item) => {
     setCurrentItem(item);
     setItemToDelete(item);
     setDeleteDialogOpen(true);
@@ -290,15 +290,21 @@ export default function ItemsListing({
         }
       } else {
         // Update existing product - include organizationId explicitly
-        const updatePayload: ItemUpdateDTO = {
-          id: currentItem.id,
+        const updatePayload: Item = {
+          ...currentItem,
           name: data.name,
           sellingPrice: Number(data.sellingPrice),
           costPrice: Number(data.costPrice),
           categoryId: data.categoryId,
           brandId: data.brandId,
           thumbnail: imageUrl,
-          organizationId: organizationId, // Add this line to ensure organizationId is included
+          organizationId: organizationId,
+          updatedAt: new Date(), // Update the timestamp
+          barcode: currentItem?.barcode || "", // Provide default or existing value
+          minStockLevel: currentItem?.minStockLevel || 0, // Provide default or existing value
+          maxStockLevel: currentItem?.maxStockLevel || 0, // Provide default or existing value
+          isActive: currentItem?.isActive ?? true, // Provide default or existing value
+          // Add other missing properties with default or existing values
         };
 
         updateItemMutation.mutate(updatePayload, {
@@ -327,7 +333,7 @@ export default function ItemsListing({
   };
 
   // Calculate total products value
-  const getTotalValue = (items: ItemDTO[]) => {
+  const getTotalValue = (items: Item[]) => {
     return items.reduce((total, item) => {
       const price =
         Number.parseFloat(item.sellingPrice?.toString() || "0") || 0;
@@ -344,18 +350,28 @@ export default function ItemsListing({
   };
 
   // Define columns for the data table
-  const columns: Column<ItemDTO>[] = [
+  const columns: Column<Item>[] = [
     {
       header: "Thumbnail",
       accessorKey: "thumbnail",
       cell: (row) => {
-        return row.thumbnail ? (
+        // First determine if we have a valid thumbnail (not empty string)
+        const hasValidThumbnail = Boolean(
+          row.thumbnail && row.thumbnail !== ""
+        );
+
+        // Then set the source with explicit type safety
+        const imgSrc = hasValidThumbnail
+          ? (row.thumbnail as string)
+          : "/placeholder.jpg";
+
+        return (
           <img
-            src={row.thumbnail || "/placeholder.svg"}
-            alt={row.name}
+            src={imgSrc}
+            alt={row.name || "Product image"}
             className="w-10 h-10 object-cover rounded-md"
           />
-        ) : null;
+        );
       },
     },
     {
@@ -409,7 +425,7 @@ export default function ItemsListing({
 
   return (
     <div>
-      <DataTable<ItemDTO>
+      <DataTable<Item>
         title={title}
         emptyStateModalTitle="Your Items List is Empty"
         emptyStateModalDescription="Create your first item to get started with inventory management."
@@ -560,7 +576,7 @@ export default function ItemsListing({
         />
         <div className="col-span-1 md:col-span-2">
           <FormLabel className="text-base font-medium mb-2 block">
-            Item Thumbnail
+            Item Thumbnail 1
           </FormLabel>
           <div className="flex flex-col space-y-3 px-4 items-center w-full border-2 border-dashed border-rose-300 rounded p-4">
             {/* Display existing thumbnail if available */}

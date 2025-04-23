@@ -2,7 +2,9 @@
 import { db } from "@/prisma/db";
 import { revalidatePath } from "next/cache";
 import { api } from "@/config/axios";
-import type { ItemCreateDTO, ItemDTO, ItemUpdateDTO } from "@/types/itemTypes";
+import type { Item, ItemCreateDTO } from "@/types/itemTypes";
+import { getAPIKey } from "./api-keys";
+import { getAuthenticatedUser } from "@/config/useAuth";
 
 // Function to create new item
 export async function createItem(data: ItemCreateDTO, organizationId: string) {
@@ -12,7 +14,7 @@ export async function createItem(data: ItemCreateDTO, organizationId: string) {
       `/organizations/${organizationId}/items`,
       data
     );
-    console.log("Item created successfully:", response.data);
+    // console.log("Item created successfully:", response.data);
     revalidatePath("/dashboard/inventory/items");
     return {
       status: 200,
@@ -48,7 +50,8 @@ export async function createItem(data: ItemCreateDTO, organizationId: string) {
 }
 
 // function to update item by id
-export async function updateItem(data: ItemUpdateDTO, id: string) {
+// Updated updateItem function to handle API errors better
+export async function updateItem(data: Item, id: string) {
   try {
     // Extract the id from the data object if it's there, otherwise use the id parameter
     const itemId = id || data.id;
@@ -56,17 +59,11 @@ export async function updateItem(data: ItemUpdateDTO, id: string) {
     // Remove id from data to avoid Prisma errors since id is in the where clause
     const { id: _, ...updateData } = data;
 
-    console.log(data.organizationId, "data.organizationId");
-    console.log(itemId, "itemId");
-    console.log(updateData, "updateData");
-
     // Now make the API request with the correct organizationId
     const response = await api.put(
       `/organizations/items/${itemId}`,
       updateData
     );
-
-    console.log("Item updated successfully:", response.data);
     revalidatePath("/dashboard/inventory/items");
 
     return {
@@ -81,7 +78,10 @@ export async function updateItem(data: ItemUpdateDTO, id: string) {
     return {
       status: error.response?.status || 500,
       message:
-        error.response?.data?.error || error.message || "Failed to update item",
+        error.response?.data?.error ||
+        (error.message && error.message.includes("imageUrls")
+          ? "Error updating item: Image URLs format is invalid"
+          : error.message || "Failed to update item"),
       data: null,
     };
   }
@@ -91,13 +91,23 @@ export async function updateItem(data: ItemUpdateDTO, id: string) {
 export async function getItemsByOrganizationId(
   organizationId: string,
   params = {}
-): Promise<ItemDTO[]> {
+): Promise<Item[]> {
   try {
+    const apiKey = await getAPIKey(organizationId);
+    if (!apiKey) {
+      console.error("API key not found for organization:", organizationId);
+      return []; // Return an empty array if API key is not found
+    }
     const response = await api.get(`/organizations/${organizationId}/items`, {
       params,
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": `${apiKey?.data?.key}`,
+      },
     });
 
-    // console.log("Items fetched successfully:", response.data);
+    // console.log("API Key:", apiKey?.data?.key); // Log the API key for debugging
+    console.log("Items fetched successfully:", response.data);
     // Return the items array directly from the nested data property
     return response.data.data || [];
   } catch (error) {
@@ -122,5 +132,33 @@ export async function deleteItem(id: string) {
   } catch (error) {
     console.log(error);
     return null;
+  }
+}
+
+// function to get item by id
+export async function getItemById(id: string) {
+  const user = await getAuthenticatedUser();
+  try {
+    const organizationId = user?.organizationId;
+    const apiKey = await getAPIKey(organizationId!);
+    if (!apiKey) {
+      console.error("API key not found for organization:", organizationId);
+      return { data: null, success: false, error: "API key not found" };
+    }
+    const response = await api.get(`/organizations/items/${id}`, {
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": `${apiKey?.data?.key}`,
+      },
+    });
+
+    console.log("API Key:", apiKey?.data?.key); // Log the API key for debugging
+    console.log("Item fetched successfully:", response.data);
+
+    // Return the response data
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching item:", error);
+    return { data: null, success: false, error: "Failed to fetch item" };
   }
 }

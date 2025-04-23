@@ -16,6 +16,7 @@ import { PasswordProps } from "@/components/Forms/ChangePasswordForm";
 import { adminPermissions, userPermissions } from "@/config/permissions";
 import { UserInvitationData } from "@/components/Forms/users/UserInvitationForm";
 import UserInvitation from "@/components/email-templates/user-invite";
+import { generateApiKey } from "@/lib/generateApiKey";
 // import { generateNumericToken } from "@/lib/token";
 const resend = new Resend(process.env.RESEND_API_KEY);
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
@@ -133,6 +134,15 @@ export async function createUser(
             },
           }));
       }
+
+      //create the API key for the organization
+      await db.apiKey.create({
+        data: {
+          name: "Default Key",
+          key: generateApiKey(),
+          organizationId: organization.id,
+        },
+      });
 
       // Find or create default role
       let defaultRole = await tx.role.findFirst({

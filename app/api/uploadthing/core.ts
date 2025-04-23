@@ -26,8 +26,8 @@ export const ourFileRouter = {
   ),
   blogImage: f({ image: { maxFileSize: "1MB" } }).onUploadComplete(
     async ({ metadata, file }) => {
-      console.log("file url", file.url);
-      return { uploadedBy: "JB" };
+      // console.log("file url", file.url);
+      return { uploadedBy: "SGD" };
     }
   ),
   fileUploads: f({
