@@ -36,13 +36,11 @@ export function CategoryForm({ organizationId }: { organizationId: string }) {
   } = useForm<CategoryFormProps>();
 
   const saveBrand = async (data: CategoryFormProps) => {
-    console.log(data);
     data.organizationId = organizationId;
     data.slug = generateSlug(data.title);
     try {
       setLoading(true);
       const res = await createCategory(data);
-      // console.log(res, "this is the response");
       if (res?.status === 200) {
         setLoading(false);
         toast.success(res?.message, {

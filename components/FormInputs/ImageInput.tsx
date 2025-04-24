@@ -33,9 +33,6 @@ export default function ImageInput({
             className="col-span-full px-4"
             endpoint={endpoint}
             onClientUploadComplete={(res) => {
-              // Do something with the response
-              console.log("Files: ", res);
-
               setImageUrl(res[0].url);
             }}
             onUploadError={(error: Error) => {

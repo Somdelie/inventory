@@ -60,11 +60,9 @@ export function UserInvitationForm({
       roleId: selectedRole.value as string,
       roleName: selectedRole.label,
     };
-    console.log(data);
     try {
       setLoading(true);
       const res = await sendInvite(data);
-      console.log(res, "this is the response");
       if (res.status === 200) {
         setLoading(false);
         toast.success("Invitation sent successfully", {

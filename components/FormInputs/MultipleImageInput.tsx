@@ -14,7 +14,6 @@ export default function MultipleImageInput({
   setImageUrls,
   endpoint,
 }: ImageInputProps) {
-  // console.log(imageUrls);
   return (
     <Card className="overflow-hidden">
       <CardHeader>
@@ -48,11 +47,6 @@ export default function MultipleImageInput({
             className="col-span-full"
             endpoint={endpoint}
             onClientUploadComplete={(res) => {
-              // Do something with the response
-              // console.log(
-              //   "Files: ",
-              //   res.map((item) => item.url)
-              // );
               setImageUrls(res.map((item) => item.url));
             }}
             onUploadError={(error: Error) => {

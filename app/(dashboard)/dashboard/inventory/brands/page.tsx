@@ -16,8 +16,6 @@ export default async function BrandsPage() {
   const organizationId = user?.organizationId ?? "";
   const brands = await getBrandsByOrganizationId(organizationId);
 
-  console.log(user.permissions, "User Permissions");
-
   // Create an empty array as fallback to ensure data is never null
   const safeBrands: BrandDTO[] = brands || [];
 

@@ -213,8 +213,6 @@ export async function createUser(
         };
       }
 
-      console.log(data);
-
       return {
         error: null,
         status: 200,
@@ -513,7 +511,6 @@ export async function getAllUsers() {
 
 //get users by organization id
 export async function getUsersByOrganizationId(organizationId: string) {
-  console.log(organizationId, "organizationId");
   try {
     const users = await db.user.findMany({
       where: {
@@ -644,7 +641,6 @@ export async function sendResetLink(email: string) {
         data: null,
       };
     }
-    console.log(data);
     return {
       status: 200,
       error: null,

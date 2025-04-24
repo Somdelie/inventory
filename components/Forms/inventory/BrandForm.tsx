@@ -34,14 +34,12 @@ export function BrandForm({ organizationId }: { organizationId: string }) {
   } = useForm<BrandFormProps>();
 
   const saveBrand = async (data: BrandFormProps) => {
-    console.log(data);
     data.organizationId = organizationId;
     data.slug = generateSlug(data.name);
     const itemId = "itemId"; // Replace with the actual item ID if needed
     try {
       setLoading(true);
       const res = await createBrand(data, itemId);
-      // console.log(res, "this is the response");
       if (res?.status === 200) {
         setLoading(false);
         toast.success(res?.message, {

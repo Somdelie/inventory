@@ -125,7 +125,6 @@ export default function SavingForm({
         //route
         router.push("/dashboard/savings");
       } else {
-        // console.log(data);
         await createSavings(data);
         setLoading(false);
         // Toast

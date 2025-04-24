@@ -48,7 +48,6 @@ export default function RegisterInvitedUserForm({
     data.roleId = roleId;
     data.organizationName = organizationName;
 
-    console.log("User data:", data);
     try {
       const res = await createInvitedUser(data);
       if (res.status === 409) {
@@ -62,7 +61,6 @@ export default function RegisterInvitedUserForm({
         setLoading(false);
         toast.error("Something went wrong");
       }
-      console.log("User data:", data);
     } catch (error) {
       setLoading(false);
       console.error("Network Error:", error);

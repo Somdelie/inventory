@@ -5,7 +5,6 @@ import { db } from "@/prisma/db";
 import { revalidatePath } from "next/cache";
 
 export async function createUnit(data: UnitFormProps) {
-  console.log(data, "this is the data from the form");
   try {
     // Check if the unit already exists
     const existingUnit = await db.unit.findFirst({

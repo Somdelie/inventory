@@ -27,9 +27,7 @@ export default function DateRangeFilter({
     from: new Date(2024, 0, 20),
     to: addDays(new Date(2024, 0, 20), 20),
   });
-  // console.log(date);
   const handleChange = (selectedDate: any) => {
-    console.log(selectedDate);
     setDate(selectedDate);
     setIsSearch(false);
     const startDate = selectedDate.from;

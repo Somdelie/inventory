@@ -43,7 +43,6 @@ export function ImageInput({
     ) {
       try {
         await deleteFile(previousUrl);
-        console.log("Previous upload deleted:", previousUrl);
       } catch (error) {
         console.error("Failed to delete previous upload:", error);
       }
@@ -80,7 +79,6 @@ export function ImageInput({
             className="ut-button:bg-transparent ut-button:text-white bg-primary rounded-r hover:opacity-95 transition duration-200 ease-in-out ut-allowed-content:hidden border-primary"
             endpoint={endpoint}
             onClientUploadComplete={(res) => {
-              console.log("Files: ", res);
               handleSetImageUrl(res[0].url);
 
               // Add success toast notification

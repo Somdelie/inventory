@@ -54,7 +54,6 @@ export async function createBlogCategory(data: BlogCategoryProps) {
   }
 }
 export async function createNewBlog(data: BlogProps) {
-  console.log(data);
   const slug = data.slug;
   try {
     const existingBlog = await db.blog.findUnique({
@@ -68,7 +67,6 @@ export async function createNewBlog(data: BlogProps) {
     const newBlog = await db.blog.create({
       data,
     });
-    console.log(newBlog);
     revalidatePath("/dashboard/blogs");
     return newBlog;
   } catch (error) {

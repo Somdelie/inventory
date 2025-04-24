@@ -80,9 +80,6 @@ export async function createOrganization(
           },
         });
 
-        console.log(
-          "Organization created successfully and user assigned as admin"
-        );
         revalidatePath("/register");
 
         return {
@@ -99,8 +96,6 @@ export async function createOrganization(
           slug,
         },
       });
-
-      console.log("Organization created successfully:", response);
       revalidatePath("/register");
       return {
         error: null,

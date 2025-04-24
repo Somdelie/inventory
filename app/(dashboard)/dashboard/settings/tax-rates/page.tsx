@@ -22,8 +22,6 @@ export default async function TaxRatesPage() {
     (permission) => permission === "settings.taxes.create"
   );
 
-  console.log("User permissions:", user?.permissions);
-
   return (
     <div className="p-8">
       {canCreateTax && (

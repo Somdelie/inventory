@@ -7,8 +7,6 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  console.log("Fetching brands for organization ID:", id);
-
   try {
     const organizationId = id;
     const searchParams = request.nextUrl.searchParams;

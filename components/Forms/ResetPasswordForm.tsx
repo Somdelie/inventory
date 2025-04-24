@@ -40,7 +40,6 @@ export default function ResetPasswordForm() {
       setLoading(false);
       return;
     }
-    console.log(email, token, data.password);
     try {
       const res = await resetUserPassword(email, token, data.password);
       if (res?.status === 404) {

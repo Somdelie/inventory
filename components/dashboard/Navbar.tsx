@@ -20,10 +20,6 @@ export default function Navbar({ session }: { session: Session }) {
   const pathname = usePathname();
   const { hasPermission } = usePermission();
 
-  console.log("Session:", session);
-  const orgId = session?.user?.organizationId;
-  console.log("Org ID:", orgId);
-
   const userRole = session?.user?.roles[0].displayName || "User Role";
 
   // Filter sidebar links based on user permissions

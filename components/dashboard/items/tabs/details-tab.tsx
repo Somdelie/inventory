@@ -63,10 +63,6 @@ export function DetailsTab({ item }: DetailsTabProps) {
   // Validation and update handlers
   const updateDimensions = async () => {
     try {
-      console.log("Updating dimensions:", {
-        dimensions: formState.dimensions,
-        weight: formState.weight,
-      });
       await updateItem(getCompleteFormData(), item.id);
       toast.success("Dimensions updated successfully");
     } catch (error) {
@@ -77,10 +73,6 @@ export function DetailsTab({ item }: DetailsTabProps) {
 
   const updateIdentifiers = async () => {
     try {
-      console.log("Updating identifiers:", {
-        upc: formState.upc,
-        ean: formState.ean,
-      });
       await updateItem(getCompleteFormData(), item.id);
       toast.success("Identifiers updated successfully");
     } catch (error) {
@@ -91,10 +83,6 @@ export function DetailsTab({ item }: DetailsTabProps) {
 
   const updateAdditionalIds = async () => {
     try {
-      console.log("Updating additional IDs:", {
-        mpn: formState.mpn,
-        isbn: formState.isbn,
-      });
       await updateItem(getCompleteFormData(), item.id);
       toast.success("Additional IDs updated successfully");
     } catch (error) {
@@ -105,8 +93,6 @@ export function DetailsTab({ item }: DetailsTabProps) {
 
   const updateThumbnail = async () => {
     try {
-      console.log("Updating thumbnail:", imageUrl);
-
       // Update the actual item with the new imageUrl
       const updatedData = {
         ...getCompleteFormData(),
@@ -121,7 +107,6 @@ export function DetailsTab({ item }: DetailsTabProps) {
       ) {
         try {
           await deleteFile(item.thumbnail);
-          console.log("Previous item thumbnail deleted:", item.thumbnail);
         } catch (deleteError) {
           console.error("Failed to delete previous thumbnail:", deleteError);
           // Continue with the update even if deletion fails
@@ -152,7 +137,6 @@ export function DetailsTab({ item }: DetailsTabProps) {
     if (newUploadUrl && newUploadUrl !== item.thumbnail) {
       try {
         await deleteFile(newUploadUrl);
-        console.log("Canceled upload deleted:", newUploadUrl);
       } catch (error) {
         console.error("Failed to delete canceled upload:", error);
       }

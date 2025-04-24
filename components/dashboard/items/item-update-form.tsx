@@ -27,8 +27,6 @@ export function ItemUpdateForm({
   brandOptions: BrandOptions[];
 }) {
   const [activeTab, setActiveTab] = useState("basic-info");
-  console.log(categoryOptions, "category options in item update form");
-  console.log(brandOptions, "brand options in item update form");
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

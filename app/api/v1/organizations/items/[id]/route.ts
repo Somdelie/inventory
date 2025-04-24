@@ -49,7 +49,6 @@ export async function GET(
         taxRate: true,
       },
     });
-    console.log("Item fetched:", item);
     return new Response(
       JSON.stringify({
         data: item,

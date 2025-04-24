@@ -100,8 +100,6 @@ export async function GET(
         },
       });
 
-      console.log("All items fetched:", allItems);
-
       return new Response(JSON.stringify({ data: allItems }), {
         status: 200,
         headers: { "Content-Type": "application/json" },

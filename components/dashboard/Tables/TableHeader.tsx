@@ -64,7 +64,6 @@ export default function TableHeader({
   } else if (model === "product") {
     excelDownload = "/Products.xlsx";
   }
-  console.log(excelFile);
   const options: Options = [
     { value: "true", label: "Active" },
     { value: "false", label: "Disabled" },
@@ -74,11 +73,9 @@ export default function TableHeader({
     { value: "thisMonth", label: "This Month" },
   ];
   const handleStatusChange = (item: SelectValue) => {
-    console.log("value:", item);
     setStatus(item);
   };
   const handleDateChange = (item: SelectValue) => {
-    console.log("value:", item);
     setDate(item);
   };
 
@@ -123,10 +120,8 @@ export default function TableHeader({
     }
   }
   function handleExportData() {
-    console.log("data exported");
     const today = new Date();
     const filename = `Exported ${title} ${today.toDateString()}`;
-    // console.log(filename);
     exportDataToExcel(data, filename);
   }
   return (

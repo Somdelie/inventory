@@ -70,7 +70,6 @@ export default function RegisterForm() {
     // We can access it through the country object
     const currencyCode = country.currency || "USD";
 
-    console.log(`Country: ${country.name}, Currency: ${currencyCode}`);
     return currencyCode;
   };
 
@@ -113,9 +112,6 @@ export default function RegisterForm() {
       }
     }
 
-    // Log the country object for debugging
-    console.log("Unable to extract ISO code from country object:", country);
-
     return null;
   };
 
@@ -124,14 +120,11 @@ export default function RegisterForm() {
 
     const isoCode = getCountryISOCode(country);
     if (!isoCode) {
-      console.log(`Could not determine ISO code for ${country.name}`);
       return "UTC";
     }
 
     const timeZones = moment.tz.zonesForCountry(isoCode);
     if (!timeZones || timeZones.length === 0) {
-      console.log(`No timezones found for ${country.name} (${isoCode})`);
-
       // Fallback to common timezones based on region
       const regionTimezones: { [key: string]: string } = {
         Africa: "Africa/Nairobi",
@@ -144,7 +137,6 @@ export default function RegisterForm() {
       return regionTimezones[country.region] || "UTC";
     }
 
-    console.log(`Country: ${country.name}, Timezones:`, timeZones);
     return timeZones[0]; // Return the first timezone
   };
 
@@ -170,7 +162,6 @@ export default function RegisterForm() {
         setLoading(false);
         toast.error("Something went wrong");
       }
-      console.log("User data:", data);
     } catch (error) {
       setLoading(false);
       console.error("Network Error:", error);

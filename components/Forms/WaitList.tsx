@@ -30,7 +30,6 @@ export default function WaitList() {
     try {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Form submitted:", data);
       reset();
     } catch (error) {
       console.error("Submission error:", error);
@@ -87,7 +86,9 @@ export default function WaitList() {
                 type="email"
                 placeholder="Enter your email"
                 className={`w-full px-6 py-4 rounded-lg bg-blue-800/20 backdrop-blur-sm text-white 
-                  placeholder-gray-400 border ${errors.email ? "border-red-500" : "border-blue-700/50"}
+                  placeholder-gray-400 border ${
+                    errors.email ? "border-red-500" : "border-blue-700/50"
+                  }
                   focus:outline-none focus:border-blue-500 transition-colors`}
                 disabled={isSubmitting || isSubmitSuccessful}
               />
@@ -102,7 +103,11 @@ export default function WaitList() {
               type="submit"
               disabled={isSubmitting || isSubmitSuccessful}
               className={`px-8 py-4 bg-black text-white rounded-lg font-semibold transition-all
-                ${isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:bg-gray-900"}
+                ${
+                  isSubmitting
+                    ? "opacity-70 cursor-not-allowed"
+                    : "hover:bg-gray-900"
+                }
                 ${isSubmitSuccessful ? "bg-green-600 hover:bg-green-600" : ""}`}
             >
               {isSubmitting ? (

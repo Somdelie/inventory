@@ -64,9 +64,7 @@ export function ItemForm({
       data.sku = generateSKU(data.name, brandName, categoryName);
       data.slug = generateSlug(data.name);
 
-
       const res = await createItem(data, organizationId);
-      console.log(res, "this is the response");
 
       if (res?.status === 201) {
         // Changed from 2001 to 201

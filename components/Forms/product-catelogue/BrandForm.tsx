@@ -41,13 +41,11 @@ export function BrandForm({
   } = useForm<BrandFormProps>();
 
   const saveBrand = async (data: BrandFormProps) => {
-    console.log(data);
     data.organizationId = organizationId;
     data.slug = generateSlug(data.name);
     try {
       setLoading(true);
       const res = await createBrand(data, itemId);
-      // console.log(res, "this is the response");
       if (res?.status === 200) {
         setLoading(false);
 

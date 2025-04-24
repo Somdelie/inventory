@@ -43,10 +43,7 @@ export function UserDropdownMenu({
     }
   }
 
-  const handleUpgrade = () => {
-    // Add your upgrade logic here
-    console.log("Upgrading to Pro...");
-  };
+  const handleUpgrade = () => {};
 
   return (
     <DropdownMenu>

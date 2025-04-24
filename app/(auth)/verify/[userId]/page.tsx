@@ -11,11 +11,7 @@ export default async function Page({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { userId } = await params;
-  const user = await getUserById(userId);
   const email = (await searchParams).email as string;
-  console.log(email);
-
-  // console.log(userId);
 
   return (
     <GridBackground>

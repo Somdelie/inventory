@@ -48,7 +48,6 @@ export function InventoryTab({ item }: InventoryTabProps) {
   // Update handlers for each card
   const updatePricing = async () => {
     try {
-      console.log("Updating pricing:", pricing);
       toast({
         title: "Success",
         description: "Pricing updated successfully",
@@ -64,7 +63,6 @@ export function InventoryTab({ item }: InventoryTabProps) {
 
   const updateInventory = async () => {
     try {
-      console.log("Updating inventory:", inventory);
       toast({
         title: "Success",
         description: "Inventory updated successfully",
@@ -80,7 +78,6 @@ export function InventoryTab({ item }: InventoryTabProps) {
 
   const updateMaxStock = async () => {
     try {
-      console.log("Updating max stock:", maxStock);
       toast({
         title: "Success",
         description: "Max stock updated successfully",
@@ -96,7 +93,6 @@ export function InventoryTab({ item }: InventoryTabProps) {
 
   const updateTaxInfo = async () => {
     try {
-      console.log("Updating tax info:", taxInfo);
       toast({
         title: "Success",
         description: "Tax info updated successfully",
@@ -112,7 +108,6 @@ export function InventoryTab({ item }: InventoryTabProps) {
 
   const updateUnitInfo = async () => {
     try {
-      console.log("Updating unit info:", unitInfo);
       toast({
         title: "Success",
         description: "Unit info updated successfully",
@@ -266,20 +261,6 @@ export function InventoryTab({ item }: InventoryTabProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="taxRate">Tax Rate</Label>
-            <select
-              id="taxRate"
-              className="w-full p-2 border rounded-md"
-              value={taxInfo.taxRateId}
-              onChange={(e) =>
-                setTaxInfo({ ...taxInfo, taxRateId: e.target.value })
-              }
-            >
-              <option value="">Select a tax rate</option>
-              {/* In a real app, you would map through tax rates here */}
-              <option value="tax1">Standard (20%)</option>
-              <option value="tax2">Reduced (5%)</option>
-              <option value="tax3">Zero (0%)</option>
-            </select>
           </div>
         </CardContent>
         <CardFooter className="justify-end">
@@ -295,20 +276,6 @@ export function InventoryTab({ item }: InventoryTabProps) {
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="unit">Unit</Label>
-            <select
-              id="unit"
-              className="w-full p-2 border rounded-md"
-              value={unitInfo.unitId}
-              onChange={(e) =>
-                setUnitInfo({ ...unitInfo, unitId: e.target.value })
-              }
-            >
-              <option value="">Select a unit</option>
-              {/* In a real app, you would map through units here */}
-              <option value="unit1">Piece</option>
-              <option value="unit2">Kilogram</option>
-              <option value="unit3">Liter</option>
-            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="unitOfMeasure">Unit of Measure</Label>

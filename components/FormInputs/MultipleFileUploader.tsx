@@ -130,7 +130,6 @@ export default function MultipleFileUpload({
           className="ut-allowed-content:hidden"
           endpoint={endpoint}
           onClientUploadComplete={(res) => {
-            console.log(res);
             const urls = res.map((item) => {
               return {
                 url: item.url,
@@ -140,9 +139,6 @@ export default function MultipleFileUpload({
               };
             });
             setFiles(urls);
-            console.log(urls);
-            console.log(res);
-            console.log("Upload Completed");
           }}
           onUploadError={(error) => {
             toast.error("File Upload Failed, Try Again");

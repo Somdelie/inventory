@@ -18,17 +18,11 @@ export default async function ItemsPage() {
     categoryMap[category.id] = category;
   });
 
-  console.log(organizationId, "this is the id of the organization");
-
   const brands = await getBrandsByOrganizationId(organizationId);
   const brandMap: { [key: string]: BrandDTO } = {};
   brands?.forEach((brand: BrandDTO) => {
     brandMap[brand.id] = brand;
   });
-
-  console.log(brands, "this is the brands");
-
-  // console.log("Items fetched on server:", items);
 
   return (
     <div className="">

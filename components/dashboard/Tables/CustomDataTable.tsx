@@ -26,7 +26,6 @@ export default function CustomDataTable({
 }: {
   categories: Category[];
 }) {
-  console.log(categories);
   return (
     <Card>
       <CardContent>

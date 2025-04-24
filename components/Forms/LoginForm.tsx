@@ -31,12 +31,10 @@ export default function LoginForm() {
     try {
       setLoading(true);
       setPassErr("");
-      console.log("Attempting to sign in with credentials:", data);
       const loginData = await signIn("credentials", {
         ...data,
         redirect: false,
       });
-      console.log("SignIn response:", loginData);
       if (loginData?.error) {
         setLoading(false);
         toast.error("Sign-in error: Check your credentials");

@@ -55,7 +55,6 @@ export default function ForgotPasswordForm() {
   async function onSubmit(data: ForgotPasswordProps) {
     try {
       setLoading(true);
-      console.log("Data:", data);
       const res = await sendResetLink(data.email);
       if (res.status === 404) {
         setLoading(false);

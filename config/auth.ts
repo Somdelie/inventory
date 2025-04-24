@@ -225,8 +225,6 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        console.log("existingUser", existingUser);
-
         // Create update data object
         const updateData: any = {};
 

@@ -32,12 +32,10 @@ export function UnitForm({ organizationId }: { organizationId: string }) {
   } = useForm<UnitFormProps>();
 
   const saveUnit = async (data: UnitFormProps) => {
-    console.log(data);
     data.organizationId = organizationId;
     try {
       setLoading(true);
       const res = await createUnit(data);
-      // console.log(res, "this is the response");
       if (res?.status === 200) {
         setLoading(false);
         toast.success(res?.message, {

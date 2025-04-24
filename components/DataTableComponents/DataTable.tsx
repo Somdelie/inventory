@@ -52,7 +52,6 @@ export default function DataTable<TData, TValue>({
   const [filteredData, setFilteredData] = useState(data);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [isSearch, setIsSearch] = useState(true);
-  // console.log(isSearch);
   const table = useReactTable({
     data: isSearch ? searchResults : filteredData,
     columns,
@@ -74,7 +73,7 @@ export default function DataTable<TData, TValue>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
-  // console.log(searchResults);
+
   return (
     <div className="space-y-4">
       {model === "savings" && (

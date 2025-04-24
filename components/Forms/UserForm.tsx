@@ -79,7 +79,6 @@ export default function UserForm({
     { value: "false", label: "Disabled" },
   ];
   const handleChange = (item: SelectValue) => {
-    console.log("value:", item);
     setStatus(item);
   };
   async function saveUser(data: UserProps) {
@@ -87,7 +86,6 @@ export default function UserForm({
       setLoading(true);
       data.image = imageUrl;
       data.name = `${data.firstName} ${data.lastName}`;
-      console.log(data);
       if (editingId) {
         // await updateUserById(editingId, data);
         setLoading(false);

@@ -14,7 +14,6 @@ export async function createItem(data: ItemCreateDTO, organizationId: string) {
       `/organizations/${organizationId}/items`,
       data
     );
-    // console.log("Item created successfully:", response.data);
     revalidatePath("/dashboard/inventory/items");
     return {
       status: 200,
@@ -105,9 +104,6 @@ export async function getItemsByOrganizationId(
         "x-api-key": `${apiKey?.data?.key}`,
       },
     });
-
-    // console.log("API Key:", apiKey?.data?.key); // Log the API key for debugging
-    console.log("Items fetched successfully:", response.data);
     // Return the items array directly from the nested data property
     return response.data.data || [];
   } catch (error) {
@@ -151,10 +147,6 @@ export async function getItemById(id: string) {
         "x-api-key": `${apiKey?.data?.key}`,
       },
     });
-
-    console.log("API Key:", apiKey?.data?.key); // Log the API key for debugging
-    console.log("Item fetched successfully:", response.data);
-
     // Return the response data
     return response.data;
   } catch (error) {

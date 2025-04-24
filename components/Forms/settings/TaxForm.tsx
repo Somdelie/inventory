@@ -32,7 +32,6 @@ export function TaxForm({ organizationId }: { organizationId: string }) {
   } = useForm<TaxFormProps>();
 
   const saveTax = async (data: TaxFormProps) => {
-    console.log(data);
     // Ensure rate is a number
     data.rate = parseFloat(data.rate as unknown as string);
     data.organizationId = organizationId;
@@ -51,7 +50,6 @@ export function TaxForm({ organizationId }: { organizationId: string }) {
     try {
       setLoading(true);
       const res = await createTax(data);
-      // console.log(res, "this is the response");
       if (res?.status === 200) {
         setLoading(false);
         toast.success(res?.message, {

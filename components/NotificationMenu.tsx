@@ -45,7 +45,6 @@ export function NotificationMenu({
 }: {
   notifications: any[];
 }) {
-  // console.log(cartItems);
   async function handleChangeStatus(id: string) {
     try {
       // await updateNotificationStatusById(id);
@@ -80,15 +79,15 @@ export function NotificationMenu({
                   item.status === "WARNING"
                     ? "border-yellow-500 bg-yellow-50"
                     : item.status === "DANGER"
-                      ? "border-red-500 bg-red-50"
-                      : "border-blue-500 bg-blue-50";
+                    ? "border-red-500 bg-red-50"
+                    : "border-blue-500 bg-blue-50";
 
                 const textClass =
                   item.status === "WARNING"
                     ? "text-yellow-600"
                     : item.status === "DANGER"
-                      ? "text-red-600"
-                      : "text-blue-600";
+                    ? "text-red-600"
+                    : "text-blue-600";
 
                 const Icon =
                   item.status === "WARNING" || item.status === "DANGER"

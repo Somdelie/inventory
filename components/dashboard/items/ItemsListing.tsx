@@ -71,7 +71,6 @@ export default function ItemsListing({
   const [itemsData, setItemsData] = useState<Item[]>([]);
   const { items, refetch } = useOrgItems(organizationId);
 
-  // console.log(items, "this is the items data fetched from the server");
   const router = useRouter();
 
   // Use useEffect to update local state after items are fetched
@@ -281,7 +280,6 @@ export default function ItemsListing({
         data.sku = generateSKU(data.name, brandName, categoryName);
         data.slug = generateSlug(data.name);
 
-        // console.log("Form data before mutation:", data);
         createItemMutation.mutate(data);
 
         // check if the mutation was successful then close the modal

@@ -9,7 +9,6 @@ export async function createSavings(data: SavingProps) {
     const newSaving = await db.saving.create({
       data,
     });
-    // console.log(newCategory);
     revalidatePath("/dashboard/savings");
     return newSaving;
   } catch (error) {

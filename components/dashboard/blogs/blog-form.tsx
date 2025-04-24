@@ -52,10 +52,8 @@ export function BlogCreateForm({
       authorImage: author?.image ?? "",
       authorTitle: "",
     };
-    console.log(data);
     try {
       const res = await createNewBlog(data);
-      console.log(res);
       if (res && res.id) {
         setLoading(false);
         router.push(`/dashboard/blogs/update/${res.id}`);

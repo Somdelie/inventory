@@ -32,7 +32,6 @@ export async function createAPIKey(data: ApiKeyFormProps) {
         error: "This Key Already exists",
       };
     }
-    console.log(apiKey);
     const newApiKey = await db.apiKey.create({
       data: {
         name: name,

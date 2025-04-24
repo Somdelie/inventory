@@ -36,7 +36,6 @@ export async function createBrand(data: BrandDTO, itemId: string) {
 export async function getBrandsByOrganizationId(id: string) {
   try {
     const organizationId = id;
-    console.log("Fetching brands for organization ID:", organizationId);
 
     const response = await api.get(`/organizations/${organizationId}/brands`);
 

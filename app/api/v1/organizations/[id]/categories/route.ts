@@ -97,8 +97,6 @@ export async function GET(
         },
       });
 
-      console.log("All category fetched:", allCats);
-
       return new Response(JSON.stringify({ data: allCats }), {
         status: 200,
         headers: { "Content-Type": "application/json" },

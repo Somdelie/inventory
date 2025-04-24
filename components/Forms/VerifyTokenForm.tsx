@@ -95,7 +95,6 @@ export default function VerifyTokenForm({
   const resendOtp = async () => {
     try {
       const otp = await resendVerificationCode(email);
-      console.log(otp);
     } catch (error) {
       console.log(error);
       toast.error("Failed to resend verification code");

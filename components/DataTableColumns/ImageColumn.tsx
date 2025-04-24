@@ -9,8 +9,7 @@ export default function ImageColumn({
   accessorKey: any;
 }) {
   const imageUrl = row.getValue(`${accessorKey}`);
-  // const thum = row.getValue(`${accessorKey}`);
-  // console.log(imageUrl);
+
   return (
     <div className="shrink-0">
       <Image

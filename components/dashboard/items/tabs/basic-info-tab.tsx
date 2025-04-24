@@ -168,12 +168,6 @@ export function BasicInfoTab({
       const categoryChanged = formState.categoryId !== item.categoryId;
       const brandChanged = formState.brandId !== item.brandId;
 
-      console.log("Updating category and brand:", {
-        categoryId: formState.categoryId,
-        brandId: formState.brandId,
-        brandName: formState.brandName,
-      });
-
       // Update the item but don't show a toast here
       await updateItem(getCompleteFormData(), item.id);
 
