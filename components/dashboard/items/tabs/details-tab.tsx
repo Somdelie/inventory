@@ -5,13 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
-import { ImageInput } from "@/components/FormInputs/ThumbnailUpload";
 import { FormCard } from "./form-card";
 import { Item } from "@/types/itemTypes";
 import { updateItem } from "@/actions/item";
 import Image from "next/image";
 import { ImageIcon, Loader2, X } from "lucide-react";
-import { useUtDelete } from "@/hooks/useUtDelete";
+import { ImageInput } from "@/components/reusable-ui/image-upload";
+import { useFileDelete } from "@/hooks/useFileDelete"; // Import the file deletion hook
 
 interface DetailsTabProps {
   item: Item;
@@ -33,7 +33,7 @@ export function DetailsTab({ item }: DetailsTabProps) {
   const [imageUrl, setImageUrl] = useState(item.thumbnail || "");
   const [showPreview, setShowPreview] = useState(false);
   const [newUploadUrl, setNewUploadUrl] = useState("");
-  const { deleteFile, isDeleting } = useUtDelete();
+  const { deleteFile, isDeleting } = useFileDelete(); // Use the file deletion hook
 
   // Check if there's a new image different from the current thumbnail
   useEffect(() => {
@@ -46,7 +46,7 @@ export function DetailsTab({ item }: DetailsTabProps) {
     } else {
       setShowPreview(false);
     }
-  }, [imageUrl, item.thumbnail]);
+  }, [imageUrl, item.thumbnail, newUploadUrl]);
 
   // Create complete form data with all fields
   const getCompleteFormData = () => ({
@@ -91,29 +91,50 @@ export function DetailsTab({ item }: DetailsTabProps) {
     }
   };
 
+  // Thumbnail update function with file deletion
   const updateThumbnail = async () => {
     try {
-      // Update the actual item with the new imageUrl
+      // No changes to make if the thumbnail hasn't changed
+      if (imageUrl === item.thumbnail) {
+        toast.success("No changes to thumbnail");
+        return;
+      }
+
+      // Prepare update data - explicitly include thumbnail
       const updatedData = {
         ...getCompleteFormData(),
         thumbnail: imageUrl,
       };
 
-      // If the item already had a thumbnail and it's different from the new one, delete it
+      console.log("Starting thumbnail update process for item ID:", item.id);
+      console.log("Current thumbnail:", item.thumbnail);
+      console.log("New thumbnail:", imageUrl);
+
+      // Step 1: Delete previous thumbnail if it exists and isn't the default
       if (
         item.thumbnail &&
         item.thumbnail !== imageUrl &&
         item.thumbnail !== "/placeholder.jpg"
       ) {
         try {
-          await deleteFile(item.thumbnail);
+          console.log(
+            "Attempting to delete previous thumbnail:",
+            item.thumbnail
+          );
+          const deletionResult = await deleteFile(item.thumbnail);
+          console.log("Delete previous thumbnail result:", deletionResult);
+          // We continue with the update even if deletion fails
         } catch (deleteError) {
-          console.error("Failed to delete previous thumbnail:", deleteError);
-          // Continue with the update even if deletion fails
+          console.error("Error during thumbnail deletion:", deleteError);
+          // We continue with the update even if deletion throws an error
         }
       }
 
-      await updateItem(updatedData, item.id);
+      // Step 2: Update the database record
+      console.log("Proceeding with database update");
+      const result = await updateItem(updatedData, item.id);
+      console.log("Update item result:", result);
+
       toast.success("Thumbnail updated successfully", {
         position: "bottom-right",
         style: {
@@ -122,20 +143,22 @@ export function DetailsTab({ item }: DetailsTabProps) {
         },
       });
 
-      // Reset preview state and new upload tracking after successful update
+      // Reset preview state after successful update
       setShowPreview(false);
       setNewUploadUrl("");
     } catch (error) {
+      console.error("Thumbnail update error:", error);
       toast.error("Failed to update thumbnail");
       throw error;
     }
   };
 
-  // Cancel preview and delete the uploaded file
+  // Cancel preview with file deletion
   const cancelImagePreview = async () => {
     // Delete the uploaded file if it exists and is different from the current thumbnail
     if (newUploadUrl && newUploadUrl !== item.thumbnail) {
       try {
+        console.log("Attempting to delete canceled upload:", newUploadUrl);
         await deleteFile(newUploadUrl);
       } catch (error) {
         console.error("Failed to delete canceled upload:", error);
@@ -149,16 +172,20 @@ export function DetailsTab({ item }: DetailsTabProps) {
   };
 
   // Custom handler for the ImageInput component
-  const handleImageUrlChange = (url: string) => {
+  const handleImageUrlChange = async (url: string) => {
+    console.log("New image URL received:", url);
+
     // If there's already a new upload and we're uploading another one, delete the previous one
     if (
       newUploadUrl &&
       newUploadUrl !== url &&
       newUploadUrl !== item.thumbnail
     ) {
-      deleteFile(newUploadUrl).catch((err) => {
+      try {
+        await deleteFile(newUploadUrl);
+      } catch (err) {
         console.error("Failed to delete previous upload:", err);
-      });
+      }
     }
 
     setImageUrl(url);
@@ -264,13 +291,19 @@ export function DetailsTab({ item }: DetailsTabProps) {
           <div className="">
             <h3 className="text-sm font-medium mb-2">Current Thumbnail</h3>
             {item.thumbnail ? (
-              <Image
-                width={100}
-                height={100}
-                src={item.thumbnail}
-                alt="Item thumbnail"
-                className="w-24 h-24 md:w-56 md:h-56 object-cover rounded border shadow-sm"
-              />
+              <div className="relative">
+                <Image
+                  width={100}
+                  height={100}
+                  src={item.thumbnail}
+                  alt="Item thumbnail"
+                  className="w-24 h-24 md:w-56 md:h-56 object-cover rounded border shadow-sm"
+                  onError={(e) => {
+                    e.currentTarget.src = "/placeholder.jpg";
+                    console.error("Failed to load thumbnail image");
+                  }}
+                />
+              </div>
             ) : (
               <div className="border-2 border-dashed border-primary/20 rounded-lg p-8 flex flex-col items-center justify-center">
                 <div className="bg-primary/10 p-4 rounded-full mb-4">
@@ -292,7 +325,7 @@ export function DetailsTab({ item }: DetailsTabProps) {
               title=""
               imageUrl={imageUrl}
               setImageUrl={handleImageUrlChange}
-              endpoint="itemImage"
+              endpoint="itemImage" // This prop is kept for compatibility
             />
 
             {/* Preview appears below the uploader */}
@@ -322,6 +355,10 @@ export function DetailsTab({ item }: DetailsTabProps) {
                     src={imageUrl}
                     alt="New thumbnail preview"
                     className="w-20 h-20 object-cover rounded"
+                    onError={(e) => {
+                      e.currentTarget.src = "/placeholder.jpg";
+                      console.error("Failed to load preview image");
+                    }}
                   />
                 </div>
               </div>
