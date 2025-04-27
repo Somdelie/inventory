@@ -42,8 +42,9 @@ import {
 } from "@/components/ui/select";
 import { generateSlug } from "@/lib/generateSlug";
 import { generateSKU } from "@/lib/generateSKU";
-import { ImageInput } from "@/components/FormInputs/ThumbnailUpload";
+import { ImageInput } from "@/components/reusable-ui/image-upload"; // Using your updated Firebase image component
 import { useRouter } from "next/navigation";
+import { useFileDelete } from "@/hooks/useFileDelete"; // Import the file deletion hook
 
 interface ItemsListingProps {
   title: string;
@@ -70,6 +71,7 @@ export default function ItemsListing({
   // Move this inside a useEffect to prevent state updates during render
   const [itemsData, setItemsData] = useState<Item[]>([]);
   const { items, refetch } = useOrgItems(organizationId);
+  const { deleteFile } = useFileDelete(); // For deleting old images
 
   const router = useRouter();
 
@@ -81,6 +83,7 @@ export default function ItemsListing({
   }, [items]);
 
   const [imageUrl, setImageUrl] = useState("");
+  const [previousImageUrl, setPreviousImageUrl] = useState(""); // Track previous image URL for cleanup
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -92,13 +95,14 @@ export default function ItemsListing({
   const resetFormAndCloseModal = useCallback(() => {
     setCurrentItem(null);
     setFormDialogOpen(false);
+    setImageUrl("");
+    setPreviousImageUrl("");
     form.reset({
       name: "",
       categoryId: "",
       brandId: "",
       sellingPrice: 0,
       costPrice: 0,
-      thumbnail: null, // Reset thumbnail as null
     });
   }, []);
 
@@ -142,6 +146,7 @@ export default function ItemsListing({
       // Also update the imageUrl state
       if (currentItem.thumbnail) {
         setImageUrl(currentItem.thumbnail);
+        setPreviousImageUrl(currentItem.thumbnail);
       }
     } else {
       form.reset({
@@ -151,8 +156,25 @@ export default function ItemsListing({
         sellingPrice: 0, // Use string here
         costPrice: 0, // Use string here
       });
+      setImageUrl("");
+      setPreviousImageUrl("");
     }
   }, [currentItem, form]);
+
+  // Custom handler for image URL changes with cleanup logic
+  const handleImageChange = async (url: string) => {
+    // Check if we need to clean up a previously uploaded temporary image
+    if (imageUrl && imageUrl !== url && imageUrl !== previousImageUrl) {
+      try {
+        // This is a temporary image that was uploaded but not saved yet, clean it up
+        await deleteFile(imageUrl);
+      } catch (error) {
+        console.error("Failed to clean up temporary image:", error);
+      }
+    }
+
+    setImageUrl(url);
+  };
 
   const { data: session } = useSession();
 
@@ -246,6 +268,16 @@ export default function ItemsListing({
   const handleConfirmDelete = async () => {
     if (itemToDelete?.id) {
       try {
+        // Also delete the thumbnail image from Firebase if it exists
+        if (itemToDelete.thumbnail) {
+          try {
+            await deleteFile(itemToDelete.thumbnail);
+          } catch (error) {
+            console.error("Error deleting item thumbnail:", error);
+            // Continue with item deletion even if thumbnail deletion fails
+          }
+        }
+
         await deleteItemMutation.mutateAsync(itemToDelete.id); // Pass ID here
         setDeleteDialogOpen(false);
         refetch();
@@ -255,39 +287,43 @@ export default function ItemsListing({
     }
   };
 
-  // Handle form submission (edit or add)
   const onSubmit = async (data: ItemCreateDTO) => {
     setIsSubmitting(true);
+
     try {
       if (!currentItem) {
-        // Add new product
-        // Generate SKU using the item name and selected category/brand
+        // --- Create New Item Flow ---
+
         const brandName = data.brandId ? brandMap[data.brandId]?.name : null;
         const categoryName = data.categoryId
           ? categoryMap[data.categoryId]?.title
           : null;
 
-        data.costPrice = Number(data.costPrice);
-        data.sellingPrice = Number(data.sellingPrice);
-        data.organizationId = organizationId; // Add organization ID to data
-        data.categoryId = data.categoryId || ""; // Ensure category ID is set
-        data.brandId = data.brandId || ""; // Ensure brand ID is set
+        const newItemData: ItemCreateDTO = {
+          ...data,
+          costPrice: Number(data.costPrice),
+          sellingPrice: Number(data.sellingPrice),
+          organizationId,
+          thumbnail: imageUrl,
+          categoryId: data.categoryId || "",
+          brandId: data.brandId || "",
+          sku: generateSKU(data.name, brandName, categoryName),
+          slug: generateSlug(data.name),
+        };
 
-        // Set the thumbnail to the current imageUrl instead of File object
-        data.thumbnail = imageUrl;
+        const response = await createItemMutation.mutateAsync(newItemData);
 
-        // Generate SKU with more context
-        data.sku = generateSKU(data.name, brandName, categoryName);
-        data.slug = generateSlug(data.name);
-
-        createItemMutation.mutate(data);
-
-        // check if the mutation was successful then close the modal
-        if (createItemMutation.isSuccess) {
-          resetFormAndCloseModal();
+        toast.success("Item created successfully!");
+        if (response.error) {
+          toast.error("Error creating item", {
+            description: response.message,
+          });
         }
+        resetFormAndCloseModal();
+        refetch();
       } else {
-        // Update existing product - include organizationId explicitly
+        // --- Update Existing Item Flow ---
+
         const updatePayload: Item = {
           ...currentItem,
           name: data.name,
@@ -296,34 +332,47 @@ export default function ItemsListing({
           categoryId: data.categoryId,
           brandId: data.brandId,
           thumbnail: imageUrl,
-          organizationId: organizationId,
-          updatedAt: new Date(), // Update the timestamp
-          barcode: currentItem?.barcode || "", // Provide default or existing value
-          minStockLevel: currentItem?.minStockLevel || 0, // Provide default or existing value
-          maxStockLevel: currentItem?.maxStockLevel || 0, // Provide default or existing value
-          isActive: currentItem?.isActive ?? true, // Provide default or existing value
-          // Add other missing properties with default or existing values
+          organizationId,
+          updatedAt: new Date(),
+          barcode: currentItem?.barcode || "",
+          minStockLevel: currentItem?.minStockLevel || 0,
+          maxStockLevel: currentItem?.maxStockLevel || 0,
+          isActive: currentItem?.isActive ?? true,
         };
 
-        updateItemMutation.mutate(updatePayload, {
-          onSuccess: () => {
-            toast.success("Item updated successfully");
-            resetFormAndCloseModal();
-            refetch();
-          },
-          onError: (error) => {
-            toast.error("Failed to update item", {
-              description:
-                error instanceof Error
-                  ? error.message
-                  : "Unknown error occurred",
-            });
-          },
-        });
+        const oldThumbnail = previousImageUrl;
+        const thumbnailChanged = imageUrl !== oldThumbnail;
+
+        await updateItemMutation.mutateAsync(updatePayload);
+
+        // Cleanup old thumbnail if needed
+        if (
+          thumbnailChanged &&
+          oldThumbnail &&
+          oldThumbnail !== "/placeholder.jpg"
+        ) {
+          try {
+            await deleteFile(oldThumbnail);
+          } catch (err) {
+            console.error("Failed to delete old thumbnail:", err);
+            // It's ok, just log it
+          }
+        }
+
+        toast.success("Item updated successfully!");
+        resetFormAndCloseModal();
+        refetch();
       }
     } catch (error) {
-      toast.error("An error occurred", {
-        description: error instanceof Error ? error.message : "Unknown error",
+      console.error(error);
+
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.";
+
+      toast.error("Error", {
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -368,6 +417,9 @@ export default function ItemsListing({
             src={imgSrc}
             alt={row.name || "Product image"}
             className="w-10 h-10 object-cover rounded-md"
+            onError={(e) => {
+              e.currentTarget.src = "/placeholder.jpg";
+            }}
           />
         );
       },
@@ -574,7 +626,7 @@ export default function ItemsListing({
         />
         <div className="col-span-1 md:col-span-2">
           <FormLabel className="text-base font-medium mb-2 block">
-            Item Thumbnail 1
+            Item Thumbnail
           </FormLabel>
           <div className="flex flex-col space-y-3 px-4 items-center w-full border-2 border-dashed border-rose-300 rounded p-4">
             {/* Display existing thumbnail if available */}
@@ -584,21 +636,24 @@ export default function ItemsListing({
                   src={imageUrl}
                   alt="Item thumbnail"
                   className="w-24 h-24 object-cover rounded-md border shadow-sm"
+                  onError={(e) => {
+                    e.currentTarget.src = "/placeholder.jpg";
+                  }}
                 />
               </div>
             )}
 
-            {/* ImageInput component with UploadThing integration */}
+            {/* Firebase ImageInput component */}
             <ImageInput
               title=""
               imageUrl={imageUrl}
-              setImageUrl={setImageUrl}
-              endpoint="itemImage"
+              setImageUrl={handleImageChange}
+              endpoint="itemImage" // This prop is kept for compatibility
             />
-            {/* <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Upload a high quality image for your item. JPG, PNG, and WebP
-              formats supported.
-            </p> */}
+              formats supported (max 1MB).
+            </p>
           </div>
         </div>
       </EntityForm>

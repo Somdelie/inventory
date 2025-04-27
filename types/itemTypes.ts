@@ -127,7 +127,7 @@ interface Item {
   isPublished: boolean;
   isSerialTracked: boolean;
   dimensions: string | null;
-  weight: string | null;
+  weight: number | null;
   upc: string | null;
   ean: string | null;
   mpn: string | null;

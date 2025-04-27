@@ -127,6 +127,7 @@ export function ImageInput({
           <Button
             className="bg-primary rounded-none rounded-r hover:opacity-95 transition duration-200 ease-in-out border-primary"
             disabled={uploadInProgress}
+            type="button"
           >
             {uploadInProgress ? "Uploading..." : "Select Image"}
           </Button>

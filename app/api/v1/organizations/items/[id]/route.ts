@@ -71,76 +71,84 @@ export async function PUT(
 ) {
   const itemId = await params;
   const body = await request.json();
+
   try {
-    // Build the update data object conditionally
     const updateData: any = {};
 
-    // Only include fields that are present in the request body
-    if (body.name !== undefined) updateData.name = body.name;
-    if (body.slug !== undefined) updateData.slug = body.slug;
-    if (body.sku !== undefined) updateData.sku = body.sku;
-    if (body.barcode !== undefined) updateData.barcode = body.barcode;
-    if (body.description !== undefined)
-      updateData.description = body.description;
-    if (body.categoryId !== undefined) updateData.categoryId = body.categoryId;
-    if (body.salesCount !== undefined) updateData.salesCount = body.salesCount;
-    if (body.salesTotal !== undefined) updateData.salesTotal = body.salesTotal;
-    if (body.costPrice !== undefined) updateData.costPrice = body.costPrice;
-    if (body.sellingPrice !== undefined)
-      updateData.sellingPrice = body.sellingPrice;
-    if (body.quantity !== undefined) updateData.quantity = body.quantity;
-    if (body.minStockLevel !== undefined)
-      updateData.minStockLevel = body.minStockLevel;
-    if (body.maxStockLevel !== undefined)
-      updateData.maxStockLevel = body.maxStockLevel;
-    if (body.isActive !== undefined) updateData.isActive = body.isActive;
-    if (body.isPublished !== undefined)
-      updateData.isPublished = body.isPublished;
-    if (body.isSerialTracked !== undefined)
-      updateData.isSerialTracked = body.isSerialTracked;
-    if (body.dimensions !== undefined) updateData.dimensions = body.dimensions;
-    if (body.weight !== undefined) updateData.weight = body.weight;
-    if (body.upc !== undefined) updateData.upc = body.upc;
-    if (body.ean !== undefined) updateData.ean = body.ean;
-    if (body.mpn !== undefined) updateData.mpn = body.mpn;
-    if (body.isbn !== undefined) updateData.isbn = body.isbn;
-    if (body.thumbnail !== undefined) updateData.thumbnail = body.thumbnail;
-    if (body.unitOfMeasure !== undefined)
-      updateData.unitOfMeasure = body.unitOfMeasure;
-    if (body.brandName !== undefined) updateData.brandName = body.brandName;
-    if (body.taxRateId !== undefined) updateData.taxRateId = body.taxRateId;
-
-    // Handle imageUrls safely - only include if it's present and is actually an array
-    if (body.imageUrls && Array.isArray(body.imageUrls)) {
-      updateData.imageUrls = {
-        set: [...body.imageUrls],
-      };
+    // Conditionally add fields
+    const fields = [
+      "name",
+      "slug",
+      "sku",
+      "barcode",
+      "description",
+      "categoryId",
+      "salesCount",
+      "salesTotal",
+      "costPrice",
+      "sellingPrice",
+      "quantity",
+      "minStockLevel",
+      "maxStockLevel",
+      "isActive",
+      "isPublished",
+      "isSerialTracked",
+      "dimensions",
+      "weight",
+      "upc",
+      "ean",
+      "mpn",
+      "isbn",
+      "thumbnail",
+      "unitOfMeasure",
+      "brandName",
+      "taxRateId",
+    ];
+    for (const field of fields) {
+      if (body[field] !== undefined) updateData[field] = body[field];
     }
 
-    // Update the item with only the fields that were provided
+    if (body.imageUrls && Array.isArray(body.imageUrls)) {
+      updateData.imageUrls = { set: [...body.imageUrls] };
+    }
+
+    // Check for name conflict
+    const existingItem = await db.item.findFirst({
+      where: { name: body.name },
+    });
+
+    if (existingItem && existingItem.id !== itemId.id) {
+      return NextResponse.json(
+        {
+          data: null,
+          status: 409,
+          message: "Item with this name already exists",
+          success: false,
+        },
+        { status: 409 }
+      );
+    }
+
     const item = await db.item.update({
-      where: {
-        id: itemId.id,
-      },
+      where: { id: itemId.id },
       data: updateData,
     });
-    return new Response(
-      JSON.stringify({
-        data: item,
-        status: 200,
-        error: null,
-        success: true,
-      })
-    );
+
+    return NextResponse.json({
+      data: item,
+      status: 200,
+      error: null,
+      success: true,
+    });
   } catch (error) {
     console.error("Error updating item:", error);
-    return new Response(
-      JSON.stringify({
+    return NextResponse.json(
+      {
         data: null,
         status: 500,
         error: error instanceof Error ? error.message : "Internal Server Error",
         success: false,
-      }),
+      },
       { status: 500 }
     );
   }

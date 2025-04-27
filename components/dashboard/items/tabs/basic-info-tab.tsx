@@ -93,7 +93,14 @@ export function BasicInfoTab({
       toast.error("Name cannot be empty");
       throw new Error("Validation failed");
     }
-    await updateItem(getCompleteFormData(), item.id);
+    const response = await updateItem(getCompleteFormData(), item.id);
+
+    if (response.status === 200) {
+      toast.success(response.message);
+    }
+    if (response.error) {
+      toast.error(response.error);
+    }
   };
 
   const updateBarcode = async () => {
@@ -193,9 +200,9 @@ export function BasicInfoTab({
     <div className="grid gap-6">
       {/* Name and Slug Card */}
       <FormCard
-        title="Product Identity"
+        title="Item Identity"
         onSubmit={updateNameSlug}
-        buttonText="Update Identity"
+        buttonText="Update Name and Slug"
       >
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">

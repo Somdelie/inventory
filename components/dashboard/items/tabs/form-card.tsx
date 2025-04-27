@@ -31,15 +31,11 @@ export const FormCard = ({
     setIsLoading(true);
     try {
       const result = await onSubmit();
-
-      // Only show success toast if there's no return value
-      // or if it doesn't contain "No changes needed"
-      if (!result) {
-        toast.success(`${title} updated successfully`);
-      } else if (!result.includes("No changes needed")) {
-        toast.success(`${result} updated successfully`);
-      } else {
-        toast.success(result);
+      if (result) {
+        toast.success(result, {
+          duration: 3000,
+          position: "top-right",
+        });
       }
     } catch (error) {
       // Error toasts are handled in the individual update functions

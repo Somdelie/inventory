@@ -48,40 +48,39 @@ export async function createItem(data: ItemCreateDTO, organizationId: string) {
   }
 }
 
-// function to update item by id
-// Updated updateItem function to handle API errors better
+// Updated updateItem function with better error handling for 409 conflicts
 export async function updateItem(data: Item, id: string) {
   try {
-    // Extract the id from the data object if it's there, otherwise use the id parameter
     const itemId = id || data.id;
-
-    // Remove id from data to avoid Prisma errors since id is in the where clause
     const { id: _, ...updateData } = data;
 
-    // Now make the API request with the correct organizationId
     const response = await api.put(
       `/organizations/items/${itemId}`,
       updateData
     );
+
     revalidatePath("/dashboard/inventory/items");
 
     return {
-      status: 200,
-      message: "Item updated successfully",
-      data: response.data.data,
+      status: response.status,
+      message: response.data?.message || "Item updated successfully",
+      data: response.data?.data || null,
+      error: null,
     };
   } catch (error: any) {
     console.error("Error updating item:", error);
 
-    // Better error handling with proper error information
+    const status = error.response?.status || 500;
+    const message =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      "Something went wrong while updating the item.";
+
     return {
-      status: error.response?.status || 500,
-      message:
-        error.response?.data?.error ||
-        (error.message && error.message.includes("imageUrls")
-          ? "Error updating item: Image URLs format is invalid"
-          : error.message || "Failed to update item"),
+      status,
+      message,
       data: null,
+      error: message,
     };
   }
 }

@@ -21,7 +21,7 @@ export function DetailsTab({ item }: DetailsTabProps) {
   // Consolidated state
   const [formState, setFormState] = useState({
     dimensions: item.dimensions || "",
-    weight: item.weight || "",
+    weight: item.weight || 0,
     upc: item.upc || "",
     ean: item.ean || "",
     mpn: item.mpn || "",
