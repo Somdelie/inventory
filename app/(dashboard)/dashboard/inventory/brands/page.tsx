@@ -9,6 +9,8 @@ import EmptyState from "@/components/global/EmptyState";
 import CustomBinIcon from "@/components/global/CustomBinIcon";
 import { BrandForm } from "@/components/Forms/inventory/BrandForm";
 import { getBrandsByOrganizationId } from "@/actions/brands";
+import { Suspense } from "react";
+import { TableLoading } from "@/components/ui/data-table";
 
 export default async function BrandsPage() {
   const user = await getAuthenticatedUser();
@@ -21,25 +23,27 @@ export default async function BrandsPage() {
 
   return (
     <div className="p-8">
-      <ModalTableHeader
-        title="Brands"
-        data={brands}
-        model="brand"
-        modalForm={<BrandForm organizationId={organizationId} />}
-      />
-      <div>
-        {safeBrands.length === 0 ? (
-          <EmptyState
-            message="No brands found"
-            icon="custom"
-            customIcon={<CustomBinIcon />}
-            description="Create your first brand to get started with inventory management."
-            // actionButton={<UnitForm organizationId={organizationId} />}
-          />
-        ) : (
-          <DataTable columns={columns} data={safeBrands} />
-        )}
-      </div>
+      <Suspense fallback={<TableLoading />}>
+        <ModalTableHeader
+          title="Brands"
+          data={brands}
+          model="brand"
+          modalForm={<BrandForm organizationId={organizationId} />}
+        />
+        <div>
+          {safeBrands.length === 0 ? (
+            <EmptyState
+              message="No brands found"
+              icon="custom"
+              customIcon={<CustomBinIcon />}
+              description="Create your first brand to get started with inventory management."
+              // actionButton={<UnitForm organizationId={organizationId} />}
+            />
+          ) : (
+            <DataTable columns={columns} data={safeBrands} />
+          )}
+        </div>
+      </Suspense>
     </div>
   );
 }

@@ -45,6 +45,7 @@ import { generateSKU } from "@/lib/generateSKU";
 import { ImageInput } from "@/components/reusable-ui/image-upload"; // Using your updated Firebase image component
 import { useRouter } from "next/navigation";
 import { useFileDelete } from "@/hooks/useFileDelete"; // Import the file deletion hook
+import { formatPrice } from "@/lib/formatPrice";
 
 interface ItemsListingProps {
   title: string;
@@ -455,9 +456,24 @@ export default function ItemsListing({
       ),
     },
     {
-      header: "Price",
+      header: "Coast Price",
+      accessorKey: "costPrice",
+      //change this to have className="text-teal-500"
+      cell: (row) => (
+        <span className="text-teal-500 font-medium">
+          {formatPrice(Number(row.costPrice) || 0)}
+        </span>
+      ),
+    },
+    {
+      header: "Selling Price",
       accessorKey: "sellingPrice",
-      cell: (row) => formatCurrency(Number(row.sellingPrice) || 0),
+      //change this to have className="text-primary"
+      cell: (row) => (
+        <span className="text-primary font-medium">
+          {formatPrice(Number(row.sellingPrice) || 0)}
+        </span>
+      ),
     },
     {
       header: "Date Added",

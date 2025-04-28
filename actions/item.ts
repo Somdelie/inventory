@@ -114,7 +114,26 @@ export async function getItemsByOrganizationId(
 // function to delete item by id
 export async function deleteItem(id: string) {
   try {
-    const item = await db.item.delete({
+    const item = await db.item.findUnique({
+      where: { id },
+    });
+    if (!item) {
+      return {
+        status: 404,
+        message: "Item not found",
+        data: null,
+      };
+    }
+
+    if (item.salesCount > 0) {
+      return {
+        status: 400,
+        message: "Item cannot be deleted as it has sales associated with it",
+        data: null,
+      };
+    }
+    // Delete the item from the database
+    const deletedItem = await db.item.delete({
       where: {
         id,
       },
@@ -122,7 +141,7 @@ export async function deleteItem(id: string) {
     return {
       status: 200,
       message: "Item deleted successfully",
-      data: item,
+      data: deletedItem,
     };
   } catch (error) {
     console.log(error);
