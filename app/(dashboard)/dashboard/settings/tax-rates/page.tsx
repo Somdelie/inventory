@@ -24,14 +24,14 @@ export default async function TaxRatesPage() {
 
   return (
     <div className="p-8">
-      {canCreateTax && (
-        <ModalTableHeader
-          title="Tax Rates"
-          data={safeTaxes}
-          model="tax"
-          modalForm={<TaxForm organizationId={organizationId} />}
-        />
-      )}
+      {/* {canCreateTax && ( */}
+      <ModalTableHeader
+        title="Tax Rates"
+        data={safeTaxes}
+        model="tax"
+        modalForm={<TaxForm organizationId={organizationId} />}
+      />
+      {/* )} */}
       <div>
         {safeTaxes.length === 0 ? (
           <EmptyState

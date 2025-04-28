@@ -65,6 +65,7 @@ export async function GET(
 
 // update item by id
 // Modified PUT route handler that safely handles imageUrls
+// Modified PUT route handler that safely handles imageUrls and numeric values
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -75,6 +76,19 @@ export async function PUT(
   try {
     const updateData: any = {};
 
+    // Define numeric fields that need conversion
+    const numericFields = [
+      "salesCount",
+      "salesTotal",
+      "costPrice",
+      "sellingPrice",
+      "quantity",
+      "minStockLevel",
+      "maxStockLevel",
+      "weight",
+      "tax",
+    ];
+
     // Conditionally add fields
     const fields = [
       "name",
@@ -83,18 +97,10 @@ export async function PUT(
       "barcode",
       "description",
       "categoryId",
-      "salesCount",
-      "salesTotal",
-      "costPrice",
-      "sellingPrice",
-      "quantity",
-      "minStockLevel",
-      "maxStockLevel",
       "isActive",
       "isPublished",
       "isSerialTracked",
       "dimensions",
-      "weight",
       "upc",
       "ean",
       "mpn",
@@ -103,21 +109,43 @@ export async function PUT(
       "unitOfMeasure",
       "brandName",
       "taxRateId",
+      "unitId",
     ];
+
+    // Add regular fields
     for (const field of fields) {
-      if (body[field] !== undefined) updateData[field] = body[field];
+      if (body[field] !== undefined) {
+        updateData[field] = body[field];
+      }
     }
 
+    // Add numeric fields with type conversion
+    for (const field of numericFields) {
+      if (body[field] !== undefined) {
+        // Convert to number or null if can't be parsed
+        const parsedValue =
+          typeof body[field] === "string"
+            ? parseFloat(body[field])
+            : body[field];
+
+        updateData[field] = !isNaN(parsedValue) ? parsedValue : null;
+      }
+    }
+
+    // Handle image URLs separately
     if (body.imageUrls && Array.isArray(body.imageUrls)) {
       updateData.imageUrls = { set: [...body.imageUrls] };
     }
 
     // Check for name conflict
     const existingItem = await db.item.findFirst({
-      where: { name: body.name },
+      where: {
+        name: body.name,
+        id: { not: itemId.id }, // Exclude current item from check
+      },
     });
 
-    if (existingItem && existingItem.id !== itemId.id) {
+    if (existingItem) {
       return NextResponse.json(
         {
           data: null,
@@ -128,6 +156,9 @@ export async function PUT(
         { status: 409 }
       );
     }
+
+    // Log the update data for debugging
+    console.log("Update data:", JSON.stringify(updateData, null, 2));
 
     const item = await db.item.update({
       where: { id: itemId.id },

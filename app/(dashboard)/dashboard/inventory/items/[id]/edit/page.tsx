@@ -1,6 +1,8 @@
 import { getBrandsByOrganizationId } from "@/actions/brands";
 import { getCategoriesByOrganizationId } from "@/actions/categories";
 import { getItemById } from "@/actions/item";
+import { getTaxesByOrganizationId } from "@/actions/taxes";
+import { getUnitsByOrganizationId } from "@/actions/unit";
 import NotFound from "@/app/not-found";
 import { ItemUpdateForm } from "@/components/dashboard/items/item-update-form";
 import { Brand, Category } from "@/types/itemTypes";
@@ -15,14 +17,26 @@ export default async function EditItemPage({
   const { data: item, success, error } = await getItemById(id);
   const categories = await getCategoriesByOrganizationId(item?.organizationId);
   const brands = await getBrandsByOrganizationId(item?.organizationId);
+  const units = await getUnitsByOrganizationId(item?.organizationId);
+  const taxes = await getTaxesByOrganizationId(item?.organizationId);
 
-  const categoryOptions = categories.map((category:Category) => ({
+  const categoryOptions = categories.map((category: Category) => ({
     value: category.id,
     label: category.title,
   }));
-  const brandOptions = brands.map((brand:Brand) => ({
+  const brandOptions = brands.map((brand: Brand) => ({
     value: brand.id,
     label: brand.name,
+  }));
+
+  const unitOptions = units?.map((unit) => ({
+    value: unit.id,
+    label: unit.title,
+  }));
+
+  const taxOptions = taxes?.map((tax) => ({
+    value: tax.id,
+    label: tax.name,
   }));
 
   if (!success) {
@@ -34,9 +48,12 @@ export default async function EditItemPage({
       <h1 className="text-2xl font-bold mb-4">
         Edit Item: <span className="text-primary">{item?.name}</span>
       </h1>
-      <ItemUpdateForm item={item}
+      <ItemUpdateForm
+        item={item}
         categoryOptions={categoryOptions}
         brandOptions={brandOptions}
+        unitOptions={unitOptions || []}
+        taxOptions={taxOptions || []}
       />
     </div>
   );

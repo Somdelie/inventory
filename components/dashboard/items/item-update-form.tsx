@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BasicInfoTab } from "./tabs/basic-info-tab";
 import { InventoryTab } from "./tabs/inventory-tab";
 import { DetailsTab } from "./tabs/details-tab";
-import { Item, ItemResponse } from "@/types/itemTypes";
+import { Item } from "@/types/itemTypes";
 
 export type CatOptions = {
   value: string;
@@ -17,15 +17,31 @@ export type BrandOptions = {
   label: string;
 };
 
+export type UnitOptions = {
+  value: string;
+  label: string;
+};
+
+export type TaxOptions = {
+  value: string;
+  label: string;
+};
+
+interface ItemUpdateFormProps {
+  item: Item;
+  categoryOptions: CatOptions[];
+  brandOptions: BrandOptions[];
+  unitOptions: UnitOptions[];
+  taxOptions: TaxOptions[];
+}
+
 export function ItemUpdateForm({
   item,
   categoryOptions,
   brandOptions,
-}: {
-  item: Item;
-  categoryOptions: CatOptions[];
-  brandOptions: BrandOptions[];
-}) {
+  unitOptions,
+  taxOptions,
+}: ItemUpdateFormProps) {
   const [activeTab, setActiveTab] = useState("basic-info");
 
   return (
@@ -45,7 +61,11 @@ export function ItemUpdateForm({
       </TabsContent>
 
       <TabsContent value="inventory">
-        <InventoryTab item={item} />
+        <InventoryTab
+          item={item}
+          unitOptions={unitOptions}
+          taxOptions={taxOptions}
+        />
       </TabsContent>
 
       <TabsContent value="details">

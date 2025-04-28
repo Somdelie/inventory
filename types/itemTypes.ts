@@ -136,7 +136,8 @@ interface Item {
   imageUrls: string[];
   unitOfMeasure: string | null;
   brandName: string | null;
-  tax: string | null;
+  tax: number | null;
+  taxId: string | null;
   unitId: string | null;
   brandId: string;
   taxRateId: string | null;
