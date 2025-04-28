@@ -12,6 +12,7 @@ import Image from "next/image";
 import { ImageIcon, Loader2, X } from "lucide-react";
 import { ImageInput } from "@/components/reusable-ui/image-upload";
 import { useFileDelete } from "@/hooks/useFileDelete"; // Import the file deletion hook
+import MultipleImageInput from "@/components/FormInputs/MultipleImageInput";
 
 interface DetailsTabProps {
   item: Item;
@@ -30,7 +31,10 @@ export function DetailsTab({ item }: DetailsTabProps) {
     imageUrls: item.imageUrls || [],
   });
 
+  // console.log("Item details:", item);
+
   const [imageUrl, setImageUrl] = useState(item.thumbnail || "");
+  const [imageUrls, setImageUrls] = useState(item.imageUrls || []);
   const [showPreview, setShowPreview] = useState(false);
   const [newUploadUrl, setNewUploadUrl] = useState("");
   const { deleteFile, isDeleting } = useFileDelete(); // Use the file deletion hook
@@ -53,6 +57,7 @@ export function DetailsTab({ item }: DetailsTabProps) {
     ...item,
     ...formState,
     thumbnail: imageUrl, // Use the imageUrl state for thumbnail
+    imageUrls: imageUrls, // Include imageUrls in the form data
   });
 
   // Generic state update handler
@@ -106,10 +111,6 @@ export function DetailsTab({ item }: DetailsTabProps) {
         thumbnail: imageUrl,
       };
 
-      console.log("Starting thumbnail update process for item ID:", item.id);
-      console.log("Current thumbnail:", item.thumbnail);
-      console.log("New thumbnail:", imageUrl);
-
       // Step 1: Delete previous thumbnail if it exists and isn't the default
       if (
         item.thumbnail &&
@@ -149,6 +150,25 @@ export function DetailsTab({ item }: DetailsTabProps) {
     } catch (error) {
       console.error("Thumbnail update error:", error);
       toast.error("Failed to update thumbnail");
+      throw error;
+    }
+  };
+
+  // handle multiple image upload
+  const handleMultipleImageUpload = async () => {
+    try {
+      // Update the item with the current imageUrls state
+      const updatedData = {
+        ...getCompleteFormData(),
+        imageUrls: imageUrls,
+      };
+
+      await updateItem(updatedData, item.id);
+      toast.success("Additional images updated successfully");
+      return "Additional images updated successfully";
+    } catch (error) {
+      console.error("Failed to update additional images:", error);
+      toast.error("Failed to update additional images");
       throw error;
     }
   };
@@ -365,6 +385,21 @@ export function DetailsTab({ item }: DetailsTabProps) {
             )}
           </div>
         </div>
+      </FormCard>
+
+      {/* multi images */}
+      <FormCard
+        title="Current Item Images"
+        onSubmit={handleMultipleImageUpload}
+        buttonText="Update Additional Images"
+      >
+        <MultipleImageInput
+          title=""
+          imageUrls={imageUrls}
+          setImageUrls={setImageUrls}
+          endpoint="itemImages"
+          itemId={item.id} // Pass the item ID for database updates
+        />
       </FormCard>
     </div>
   );

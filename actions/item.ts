@@ -60,7 +60,7 @@ export async function updateItem(data: Item, id: string) {
     );
 
     revalidatePath("/dashboard/inventory/items");
-
+    console.log("Item updated successfully:", response.data.data);
     return {
       status: response.status,
       message: response.data?.message || "Item updated successfully",
