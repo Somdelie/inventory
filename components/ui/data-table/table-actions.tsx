@@ -11,6 +11,7 @@ interface ActionButtonProps {
   disabled?: boolean;
   loading?: boolean;
   className?: string;
+  buttonTitle?: string; // Optional prop for button title
 }
 
 // Add Button
@@ -19,6 +20,7 @@ const AddButton = ({
   disabled = false,
   loading = false,
   className = "",
+  buttonTitle = "Item",
 }: ActionButtonProps) => (
   <Button
     onClick={onClick}
@@ -30,7 +32,7 @@ const AddButton = ({
     ) : (
       <Plus className="mr-2 h-4 w-4" />
     )}
-    Add New
+    Add New {buttonTitle}
   </Button>
 );
 

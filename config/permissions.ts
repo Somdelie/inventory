@@ -1,5 +1,3 @@
-// permissions.ts
-
 export type Permission = {
   create: string;
   read: string;
@@ -24,11 +22,23 @@ export const permissions: ModulePermissions[] = [
   "settings",
   "categories",
   "products",
-  "blogs",
   "taxes",
   "brands",
   "units",
   "api keys",
+  "stock",
+  "serial numbers",
+  // Added missing permissions based on schema
+  "suppliers",
+  "inventory",
+  "locations",
+  "purchase orders",
+  "goods receipts",
+  "transfers",
+  "adjustments",
+  "organizations",
+  "invitations",
+  "pos",
 ].map((name) => ({
   display: name.charAt(0).toUpperCase() + name.slice(1),
   name,
@@ -107,15 +117,72 @@ export const adminPermissions = [
   "products.update",
   "products.delete",
 
-  "blogs.create",
-  "blogs.read",
-  "blogs.update",
-  "blogs.delete",
-
   "api keys.create",
   "api keys.read",
   "api keys.update",
   "api keys.delete",
+
+  "stock.create",
+  "stock.read",
+  "stock.update",
+  "stock.delete",
+
+  "serial numbers.create",
+  "serial numbers.read",
+  "serial numbers.update",
+  "serial numbers.delete",
+
+  // Added missing admin permissions
+  "suppliers.create",
+  "suppliers.read",
+  "suppliers.update",
+  "suppliers.delete",
+
+  "inventory.create",
+  "inventory.read",
+  "inventory.update",
+  "inventory.delete",
+
+  "locations.create",
+  "locations.read",
+  "locations.update",
+  "locations.delete",
+
+  "purchase orders.create",
+  "purchase orders.read",
+  "purchase orders.update",
+  "purchase orders.delete",
+
+  "goods receipts.create",
+  "goods receipts.read",
+  "goods receipts.update",
+  "goods receipts.delete",
+
+  "transfers.create",
+  "transfers.read",
+  "transfers.update",
+  "transfers.delete",
+
+  "adjustments.create",
+  "adjustments.read",
+  "adjustments.update",
+  "adjustments.delete",
+
+  "organizations.create",
+  "organizations.read",
+  "organizations.update",
+  "organizations.delete",
+
+  "invitations.create",
+  "invitations.read",
+  "invitations.update",
+  "invitations.delete",
+
+  // Added missing admin permissions
+  "pos.create",
+  "pos.read",
+  "pos.update",
+  "pos.delete",
 ];
 
 export const userPermissions = [
@@ -128,6 +195,40 @@ export const userPermissions = [
   "taxes.read",
   "categories.read",
   "customers.read",
+  // Added permissions that regular users might need
+  "inventory.read",
+  "suppliers.read",
+  "locations.read",
+  "serial numbers.read",
+];
+
+// Added service provider permissions
+export const serviceProviderPermissions = [
+  "dashboard.read",
+  "profile.read",
+  "profile.update",
+  "products.read",
+  "products.create",
+  "products.update",
+  "inventory.read",
+  "inventory.update",
+  "purchase orders.read",
+  "purchase orders.create",
+  "goods receipts.read",
+  "goods receipts.create",
+  "transfers.read",
+  "transfers.create",
+  "adjustments.read",
+  "adjustments.create",
+  "suppliers.read",
+  "locations.read",
+  "serial numbers.read",
+  "serial numbers.create",
+  "serial numbers.update",
+  "pos.read",
+  "pos.create",
+  "pos.update",
+  "pos.delete",
 ];
 
 // Helper function to get all permission strings
@@ -152,3 +253,17 @@ export function getModulePermissions(
 export type PermissionsType = {
   [K in (typeof permissions)[number]["name"]]: Permission;
 };
+
+// Helper to get permissions for a specific role
+export function getRolePermissions(role: string): string[] {
+  switch (role) {
+    case "ADMIN":
+      return adminPermissions;
+    case "USER":
+      return userPermissions;
+    case "SERVICE_PROVIDER":
+      return serviceProviderPermissions;
+    default:
+      return [];
+  }
+}

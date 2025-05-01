@@ -139,6 +139,7 @@ export async function updateRole(id: string, data: Partial<RoleFormData>) {
       const existingRole = await db.role.findFirst({
         where: {
           displayName: data.displayName,
+          organizationId: data.organizationId,
           NOT: {
             id: id,
           },

@@ -1,6 +1,5 @@
 "use client";
-import { createBrand } from "@/actions/brands";
-import { createCategory } from "@/actions/categories";
+import { createSupplier } from "@/actions/suppliers";
 import TextInput from "@/components/FormInputs/TextInput";
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,22 +10,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { generateSlug } from "@/lib/generateSlug";
 import { Check, LayoutGrid, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-export type CategoryFormProps = {
+export type SupplierFormProps = {
   id: string;
-  title: string;
-  description: string;
+  name: string;
   organizationId: string;
-  slug: string;
-  imageUrl: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  taxId?: string;
+  paymentTerms?: string;
+  notes?: string;
+  isActive?: boolean;
 };
 
-export function CategoryForm({ organizationId }: { organizationId: string }) {
+export function SupplierForm({ organizationId }: { organizationId: string }) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const {
@@ -34,14 +36,15 @@ export function CategoryForm({ organizationId }: { organizationId: string }) {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CategoryFormProps>();
+  } = useForm<SupplierFormProps>();
 
-  const saveBrand = async (data: CategoryFormProps) => {
+  const saveSupplier = async (data: SupplierFormProps) => {
     data.organizationId = organizationId;
-    data.slug = generateSlug(data.title);
+    data.isActive = true; // Default to active
+
     try {
       setLoading(true);
-      const res = await createCategory(data);
+      const res = await createSupplier(data);
       if (res?.status === 200) {
         setLoading(false);
         toast.success(res?.message, {
@@ -50,12 +53,12 @@ export function CategoryForm({ organizationId }: { organizationId: string }) {
             color: "#fff",
           },
         });
-        // window.location.reload();
-        // reset();
+        window.location.reload();
+        reset();
         setOpen(false);
       } else {
         setLoading(false);
-        toast.error(res?.message, {
+        toast.error(res?.error, {
           style: {
             background: "#EF4444",
             color: "#fff",
@@ -77,7 +80,7 @@ export function CategoryForm({ organizationId }: { organizationId: string }) {
         <Button size="sm" className="h-8 gap-1">
           <LayoutGrid className="h-4 w-4" />
           <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            Add New Category
+            Add New Supplier
           </span>
         </Button>
       </DialogTrigger>
@@ -87,7 +90,7 @@ export function CategoryForm({ organizationId }: { organizationId: string }) {
         </DialogHeader>
         <Card className="w-full ">
           <CardHeader>
-            <CardTitle>Add New Category</CardTitle>
+            <CardTitle>Add New Supplier</CardTitle>
           </CardHeader>
           <CardFooter className="flex flex-col gap-4">
             <form className="flex flex-col w-full gap-2">
@@ -95,9 +98,37 @@ export function CategoryForm({ organizationId }: { organizationId: string }) {
                 <TextInput
                   register={register}
                   errors={errors}
-                  label="Category Title"
-                  placeholder="e.g. Electronics"
-                  name="title"
+                  label="Supplier Name"
+                  placeholder="e.g. ABC Suppliers Inc."
+                  name="name"
+                />
+                <TextInput
+                  register={register}
+                  errors={errors}
+                  label="Email"
+                  placeholder="supplier@example.com"
+                  name="email"
+                />
+                <TextInput
+                  register={register}
+                  errors={errors}
+                  label="Phone"
+                  placeholder="e.g. +1 123-456-7890"
+                  name="phone"
+                />
+                <TextInput
+                  register={register}
+                  errors={errors}
+                  label="Address"
+                  placeholder="e.g. 123 Supply St, Warehouse City"
+                  name="address"
+                />
+                <TextInput
+                  register={register}
+                  errors={errors}
+                  label="Payment Terms"
+                  placeholder="e.g. Net 30"
+                  name="paymentTerms"
                 />
               </div>
               {loading ? (
@@ -107,12 +138,12 @@ export function CategoryForm({ organizationId }: { organizationId: string }) {
                 </Button>
               ) : (
                 <Button
-                  onClick={handleSubmit(saveBrand)}
+                  onClick={handleSubmit(saveSupplier)}
                   className="w-full"
                   type="submit"
                 >
                   <Check className="h-4 w-4 mr-2" />
-                  Save Category
+                  Save Supplier
                 </Button>
               )}
             </form>

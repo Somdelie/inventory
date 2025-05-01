@@ -115,7 +115,7 @@ export async function createUser(
           timezone: organizationData.timezone,
         };
 
-        //create organization
+        // Create organization
         organization = await tx.organization.create({
           data: organizationDataForPrisma,
         });
@@ -135,8 +135,8 @@ export async function createUser(
           }));
       }
 
-      //create the API key for the organization
-      await db.apiKey.create({
+      // Create API key for the organization
+      await tx.apiKey.create({
         data: {
           name: "Default Key",
           key: generateApiKey(),
@@ -144,20 +144,62 @@ export async function createUser(
         },
       });
 
-      // Find or create default role
-      let defaultRole = await tx.role.findFirst({
-        where: { roleName: ADMIN_USER_ROLE.roleName },
+      // OPTION 2: Directly create roles without checking first
+      // Create admin role for this organization
+      const adminRole = await tx.role.create({
+        data: {
+          displayName: "Administrator",
+          roleName: `admin_${organization.id}`, // Make unique with org ID
+          description: "Admin role with full permissions",
+          permissions: adminPermissions,
+          organizationId: organization.id,
+        },
       });
 
-      // Create default role if it doesn't exist
-      if (!defaultRole) {
-        defaultRole = await tx.role.create({
-          data: {
-            ...ADMIN_USER_ROLE,
-            organizationId: organization.id,
-          },
-        });
-      }
+      // Create user role as well
+      await tx.role.create({
+        data: {
+          displayName: "User",
+          roleName: `user_${organization.id}`, // Make unique with org ID
+          description: "Default user role with basic permissions",
+          permissions: userPermissions,
+          organizationId: organization.id,
+        },
+      });
+
+      // Create service provider role
+      await tx.role.create({
+        data: {
+          displayName: "Service Provider",
+          roleName: `service_provider_${organization.id}`, // Make unique with org ID
+          description:
+            "Service provider role with inventory management permissions",
+          permissions: [
+            "dashboard.read",
+            "profile.read",
+            "profile.update",
+            "products.read",
+            "products.create",
+            "products.update",
+            "inventory.read",
+            "inventory.update",
+            "purchase orders.read",
+            "purchase orders.create",
+            "goods receipts.read",
+            "goods receipts.create",
+            "transfers.read",
+            "transfers.create",
+            "adjustments.read",
+            "adjustments.create",
+            "suppliers.read",
+            "locations.read",
+            "serial numbers.read",
+            "serial numbers.create",
+            "serial numbers.update",
+          ],
+          organizationId: organization.id,
+        },
+      });
 
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -172,7 +214,7 @@ export async function createUser(
           password: hashedPassword,
           firstName,
           lastName,
-          name, // Add the combined name field
+          name,
           country,
           state,
           city,
@@ -184,12 +226,12 @@ export async function createUser(
           organizationName: organization.name,
           roles: {
             connect: {
-              id: defaultRole.id,
+              id: adminRole.id,
             },
           },
         },
         include: {
-          roles: true, // Include roles in the response
+          roles: true,
           Organization: true,
         },
       });
@@ -785,6 +827,8 @@ export async function updateUserById(userId: string, otp: string) {
       },
       data: {
         isVerfied: true,
+        emailVerified: new Date(),
+        token: null, // Clear the token after use for security
       },
     });
     return updatedUser;

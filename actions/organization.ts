@@ -1,5 +1,6 @@
 "use server";
 
+import { adminPermissions } from "@/config/permissions";
 import { generateSlug } from "@/lib/generateSlug";
 import { db } from "@/prisma/db";
 import { OrganizationProps } from "@/types/types";
@@ -38,7 +39,10 @@ export async function createOrganization(
 
         // Find or create admin role
         let adminRole = await tx.role.findFirst({
-          where: { roleName: "admin" },
+          where: {
+            roleName: "admin",
+            organizationId: newOrganization.id,
+          },
         });
 
         if (!adminRole) {
@@ -47,25 +51,69 @@ export async function createOrganization(
               displayName: "Admin",
               roleName: "admin",
               description: "Administrator with full permissions",
-              permissions: [
-                "dashboard.read",
-                "profile.read",
-                "profile.update",
-                "users.read",
-                "users.create",
-                "users.update",
-                "users.delete",
-                "organizations.read",
-                "organizations.update",
-                "organizations.delete",
-                "orders.read",
-                "orders.create",
-                "orders.update",
-                "orders.delete",
-              ],
+              permissions: adminPermissions, // Use the comprehensive admin permissions
+              organizationId: newOrganization.id, // Important: link role to organization
             },
           });
         }
+
+        // Create default user and service provider roles
+        await tx.role.create({
+          data: {
+            displayName: "User",
+            roleName: "user",
+            description: "Regular user with limited permissions",
+            permissions: [
+              "dashboard.read",
+              "profile.read",
+              "profile.update",
+              "products.read",
+              "orders.read",
+              "orders.create",
+              "taxes.read",
+              "categories.read",
+              "customers.read",
+              "inventory.read",
+              "suppliers.read",
+              "locations.read",
+              "serial numbers.read",
+            ],
+            organizationId: newOrganization.id,
+          },
+        });
+
+        await tx.role.create({
+          data: {
+            displayName: "Service Provider",
+            roleName: "service_provider",
+            description:
+              "Service provider with inventory management permissions",
+            permissions: [
+              "dashboard.read",
+              "profile.read",
+              "profile.update",
+              "products.read",
+              "products.create",
+              "products.update",
+              "inventory.read",
+              "inventory.update",
+              "purchase orders.read",
+              "purchase orders.create",
+              "goods receipts.read",
+              "goods receipts.create",
+              "transfers.read",
+              "transfers.create",
+              "adjustments.read",
+              "adjustments.create",
+              "suppliers.read",
+              "locations.read",
+              "serial numbers.read",
+              "serial numbers.create",
+              "serial numbers.update",
+            ],
+            organizationId: newOrganization.id,
+          },
+        });
 
         // Update the user to connect them to the organization and assign admin role
         await tx.user.update({
@@ -114,6 +162,140 @@ export async function createOrganization(
 }
 
 export async function getAllOrganizations() {
-  const response = await db.organization.findMany();
-  return response;
+  try {
+    const response = await db.organization.findMany({
+      include: {
+        users: true,
+        locations: true,
+      },
+    });
+    return {
+      error: null,
+      status: 200,
+      data: response,
+    };
+  } catch (error) {
+    console.error("Error fetching organizations:", error);
+    return {
+      error: "Failed to fetch organizations",
+      status: 500,
+      data: null,
+    };
+  }
+}
+
+export async function getOrganizationById(id: string) {
+  try {
+    const organization = await db.organization.findUnique({
+      where: { id },
+      include: {
+        users: true,
+        locations: true,
+      },
+    });
+
+    if (!organization) {
+      return {
+        error: "Organization not found",
+        status: 404,
+        data: null,
+      };
+    }
+
+    return {
+      error: null,
+      status: 200,
+      data: organization,
+    };
+  } catch (error) {
+    console.error("Error fetching organization:", error);
+    return {
+      error: "Failed to fetch organization details",
+      status: 500,
+      data: null,
+    };
+  }
+}
+
+export async function updateOrganization(
+  id: string,
+  data: Partial<OrganizationProps>
+) {
+  try {
+    // Check if organization exists
+    const existingOrg = await db.organization.findUnique({
+      where: { id },
+    });
+
+    if (!existingOrg) {
+      return {
+        error: "Organization not found",
+        status: 404,
+        data: null,
+      };
+    }
+
+    // If name is being updated, generate a new slug
+    let updateData: any = { ...data };
+    if (data.name && data.name !== existingOrg.name) {
+      updateData.slug = generateSlug(data.name);
+
+      // Check if the new slug already exists
+      const slugExists = await db.organization.findUnique({
+        where: { slug: updateData.slug },
+      });
+
+      if (slugExists && slugExists.id !== id) {
+        return {
+          error: `Organization with name ${data.name} already exists`,
+          status: 409,
+          data: null,
+        };
+      }
+    }
+
+    const updatedOrganization = await db.organization.update({
+      where: { id },
+      data: updateData,
+    });
+
+    revalidatePath(`/dashboard/organizations/${id}`);
+    revalidatePath("/dashboard/organizations");
+
+    return {
+      error: null,
+      status: 200,
+      data: updatedOrganization,
+    };
+  } catch (error) {
+    console.error("Error updating organization:", error);
+    return {
+      error: "Failed to update organization",
+      status: 500,
+      data: null,
+    };
+  }
+}
+
+export async function deleteOrganization(id: string) {
+  try {
+    await db.organization.delete({
+      where: { id },
+    });
+
+    revalidatePath("/dashboard/organizations");
+
+    return {
+      error: null,
+      status: 200,
+      data: null,
+    };
+  } catch (error) {
+    console.error("Error deleting organization:", error);
+    return {
+      error: "Failed to delete organization",
+      status: 500,
+      data: null,
+    };
+  }
 }

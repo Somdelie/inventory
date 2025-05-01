@@ -290,11 +290,6 @@ export const sidebarLinks: ISidebarLink[] = [
         permission: "settings.read",
       },
       {
-        title: "Add Location",
-        href: "/dashboard/settings/locations/create",
-        permission: "settings.create",
-      },
-      {
         title: "Users",
         href: "/dashboard/settings/users",
         permission: "users.read",

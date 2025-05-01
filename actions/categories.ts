@@ -26,7 +26,7 @@ export async function createCategory(data: CategoryDTO) {
     const category = await db.category.create({
       data,
     });
-    revalidatePath("/dashboard/categories");
+    revalidatePath("/dashboard/inventory/categories");
     return {
       status: 200,
       message: "Category created successfully",

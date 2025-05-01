@@ -204,7 +204,7 @@ export default function ItemsListing({
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-UG", {
       style: "currency",
-      currency: "UGX",
+      currency: "ZAR",
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -493,6 +493,7 @@ export default function ItemsListing({
     <div>
       <DataTable<Item>
         title={title}
+        buttonTitle="Item"
         emptyStateModalTitle="Your Items List is Empty"
         emptyStateModalDescription="Create your first item to get started with inventory management."
         subtitle={

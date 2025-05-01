@@ -49,8 +49,8 @@ export function CategoryForm({ organizationId }: { organizationId: string }) {
             color: "#fff",
           },
         });
-        window.location.reload();
-        reset();
+        // window.location.reload();
+        // reset();
         setOpen(false);
       } else {
         setLoading(false);

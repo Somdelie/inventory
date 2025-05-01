@@ -1,8 +1,7 @@
-// components/ui/data-table/data-table.tsx
 "use client";
 
 import { useState, useEffect, ReactNode } from "react";
-import clsx from "clsx";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -34,10 +33,12 @@ export interface Column<T> {
   header: string;
   accessorKey: keyof T | ((row: T) => any);
   cell?: (row: T) => ReactNode;
+  className?: string;
 }
 
 interface DataTableProps<T> {
   title: string;
+  buttonTitle?: string;
   subtitle?: string;
   emptyStateModalTitle?: string;
   emptyStateModalDescription?: string;
@@ -51,6 +52,7 @@ interface DataTableProps<T> {
     onEdit?: (item: T) => void;
     onDelete?: (item: T) => void;
     onExport?: (filteredData: T[]) => void;
+    additionalActions?: ReactNode;
   };
   filters?: {
     searchFields?: (keyof T)[];
@@ -60,10 +62,17 @@ interface DataTableProps<T> {
   };
   renderRowActions?: (item: T) => ReactNode;
   emptyState?: ReactNode;
+  rowClassName?: (item: T) => string;
+  onRowClick?: (item: T) => void;
+  pagination?: {
+    defaultItemsPerPage?: number;
+    itemsPerPageOptions?: number[];
+  };
 }
 
 export default function DataTable<T>({
   title,
+  buttonTitle,
   emptyStateModalTitle,
   emptyStateModalDescription,
   subtitle,
@@ -76,10 +85,18 @@ export default function DataTable<T>({
   filters,
   renderRowActions,
   emptyState,
+  rowClassName,
+  onRowClick,
+  pagination = {
+    defaultItemsPerPage: 5,
+    itemsPerPageOptions: [5, 10, 25, 50, 100],
+  },
 }: DataTableProps<T>) {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [itemsPerPage, setItemsPerPage] = useState(
+    pagination.defaultItemsPerPage ?? 5
+  );
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,13 +114,13 @@ export default function DataTable<T>({
   }, [searchQuery, dateFilter, itemsPerPage]);
 
   // Apply search filter
-  const applySearchFilter = (items: T[]): T[] => {
-    if (!searchQuery.trim() || !filters?.searchFields?.length) return items;
+  const applySearchFilter = (data: T[]): T[] => {
+    if (!searchQuery.trim() || !filters?.searchFields?.length) return data;
 
     const query = searchQuery.toLowerCase();
-    return items.filter((item) => {
+    return data.filter((data) => {
       return filters.searchFields!.some((field) => {
-        const value = item[field];
+        const value = data[field];
         if (value === null || value === undefined) return false;
         return String(value).toLowerCase().includes(query);
       });
@@ -111,21 +128,24 @@ export default function DataTable<T>({
   };
 
   // Apply date filter
-  const applyDateFilter = (items: T[]): T[] => {
+  const applyDateFilter = (data: T[]): T[] => {
     if (
       !dateFilter.range?.from ||
       !dateFilter.range?.to ||
       !filters?.getItemDate
     ) {
-      return items;
+      return data;
     }
 
     const from = new Date(dateFilter.range.from);
     const to = new Date(dateFilter.range.to);
 
-    return items.filter((item) => {
-      const itemDate = new Date(filters.getItemDate!(item));
-      return itemDate >= from && itemDate <= to;
+    // Add one day to 'to' date to include the end date in the filter
+    to.setDate(to.getDate() + 1);
+
+    return data.filter((data) => {
+      const itemDate = new Date(filters.getItemDate!(data));
+      return itemDate >= from && itemDate < to;
     });
   };
 
@@ -196,7 +216,8 @@ export default function DataTable<T>({
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="text-2xl">{title}</CardTitle>
-          {filters && (
+          {subtitle && <p className="text-muted-foreground mt-1">{subtitle}</p>}
+          {filters && !subtitle && (
             <p className="text-muted-foreground mt-1">
               {filteredData?.length}{" "}
               {filteredData?.length === 1 ? "item" : "items"}
@@ -215,22 +236,32 @@ export default function DataTable<T>({
               title="Refresh data"
             >
               <RefreshCw
-                className={clsx("h-4 w-4", isLoading && "animate-spin")}
+                className={cn("h-4 w-4", isLoading && "animate-spin")}
               />
             </Button>
           )}
-          {actions?.onAdd && <TableActions.AddButton onClick={actions.onAdd} />}
+          {actions?.additionalActions}
+          {actions?.onAdd && (
+            <TableActions.AddButton
+              onClick={actions.onAdd}
+              buttonTitle={buttonTitle}
+            />
+          )}
         </div>
       </CardHeader>
 
       <CardContent>
         {data.length === 0 && !isLoading ? (
-          <EmptyState
-            message={emptyStateModalTitle}
-            icon="custom"
-            customIcon={<CustomBinIcon />}
-            description={emptyStateModalDescription}
-          />
+          <div className="flex flex-col items-center justify-center py-12">
+            {emptyState || (
+              <EmptyState
+                message={emptyStateModalTitle}
+                description={emptyStateModalDescription}
+                icon="custom"
+                customIcon={<CustomBinIcon />}
+              />
+            )}
+          </div>
         ) : (
           <>
             {/* Filter bar */}
@@ -253,66 +284,82 @@ export default function DataTable<T>({
             )}
 
             {/* Table */}
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {columns.map((column, index) => (
-                    <TableHead key={index}>{column.header}</TableHead>
-                  ))}
-                  {renderRowActions && (
-                    <TableHead className="text-right">Actions</TableHead>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currentItems?.length > 0 ? (
-                  currentItems.map((item) => (
-                    <TableRow key={String(item[keyField])}>
-                      {columns.map((column, index) => (
-                        <TableCell key={index}>
-                          {column.cell
-                            ? column.cell(item)
-                            : getCellValue(item, column.accessorKey)}
-                        </TableCell>
-                      ))}
-                      {renderRowActions && (
-                        <TableCell className="text-right">
-                          {renderRowActions(item)}
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))
-                ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell
-                      colSpan={columns.length + (renderRowActions ? 1 : 0)}
-                      className="text-center py-6"
-                    >
-                      {emptyState ||
-                        (searchQuery || dateFilter.option !== "lifetime"
-                          ? "No matching items found for the selected filters"
-                          : "No items found")}
-                    </TableCell>
+                    {columns.map((column, index) => (
+                      <TableHead key={index} className={column.className}>
+                        {column.header}
+                      </TableHead>
+                    ))}
+                    {renderRowActions && (
+                      <TableHead className="text-right">Actions</TableHead>
+                    )}
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {currentItems?.length > 0 ? (
+                    currentItems.map((item) => (
+                      <TableRow
+                        key={String(item[keyField])}
+                        className={cn(
+                          rowClassName && rowClassName(item),
+                          onRowClick && "cursor-pointer hover:bg-muted/50"
+                        )}
+                        onClick={
+                          onRowClick ? () => onRowClick(item) : undefined
+                        }
+                      >
+                        {columns.map((column, index) => (
+                          <TableCell key={index} className={column.className}>
+                            {column.cell
+                              ? column.cell(item)
+                              : getCellValue(item, column.accessorKey)}
+                          </TableCell>
+                        ))}
+                        {renderRowActions && (
+                          <TableCell className="text-right">
+                            {renderRowActions(item)}
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length + (renderRowActions ? 1 : 0)}
+                        className="text-center py-6"
+                      >
+                        {emptyState ||
+                          (searchQuery || dateFilter.option !== "lifetime"
+                            ? "No matching items found for the selected filters"
+                            : "No items found")}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
 
             {/* Pagination */}
             {filteredData?.length > 0 && (
-              <div className="mt-4 flex flex-col sm:flex-row justify-between items-center">
-                <div className="mb-2 sm:mb-0">
+              <div className="mt-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="flex flex-col md:flex-row md:items-center gap-2 w-full md:w-auto">
                   <RowsPerPage
                     value={itemsPerPage}
                     onChange={setItemsPerPage}
-                    options={[5, 10, 25, 50, 100]}
+                    options={
+                      pagination.itemsPerPageOptions || [5, 10, 25, 50, 100]
+                    }
                   />
+                  <div className="text-sm text-muted-foreground">
+                    Showing {indexOfFirstItem + 1}-
+                    {Math.min(indexOfLastItem, filteredData.length)} of{" "}
+                    {filteredData.length}
+                  </div>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  Showing {indexOfFirstItem + 1}-
-                  {Math.min(indexOfLastItem, filteredData.length)} of{" "}
-                  {filteredData.length}
-                </div>
+
                 {totalPages > 1 && (
                   <Pagination>
                     <PaginationContent>
@@ -321,7 +368,7 @@ export default function DataTable<T>({
                           onClick={() =>
                             handlePageChange(Math.max(1, currentPage - 1))
                           }
-                          className={clsx(
+                          className={cn(
                             currentPage === 1
                               ? "pointer-events-none opacity-50"
                               : "cursor-pointer"
@@ -338,7 +385,7 @@ export default function DataTable<T>({
                           <PaginationItem key={`page-${page}`}>
                             <PaginationLink
                               onClick={() => handlePageChange(page as number)}
-                              className={clsx(
+                              className={cn(
                                 currentPage === page
                                   ? "bg-primary text-primary-foreground"
                                   : "cursor-pointer"
@@ -357,7 +404,7 @@ export default function DataTable<T>({
                               Math.min(totalPages, currentPage + 1)
                             )
                           }
-                          className={clsx(
+                          className={cn(
                             currentPage === totalPages
                               ? "pointer-events-none opacity-50"
                               : "cursor-pointer"
