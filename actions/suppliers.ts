@@ -66,6 +66,7 @@ export async function getSuppliersByOrganizationId(
         },
       }
     );
+    // console.log("Suppliers fetched successfully:", response.data.data);
     // Return the items array directly from the nested data property
     return response.data.data || [];
   } catch (error) {

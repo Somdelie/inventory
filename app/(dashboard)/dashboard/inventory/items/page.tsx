@@ -6,6 +6,8 @@ import { getBrandsByOrganizationId } from "@/actions/brands";
 import { BrandDTO, CategoryDTO } from "@/types/types";
 import { getCategoriesByOrganizationId } from "@/actions/categories";
 import ListingWrapper from "@/components/dashboard/items/listing-wrapper";
+import { SupplierDTO } from "@/types";
+import { getSuppliersByOrganizationId } from "@/actions/suppliers";
 
 export default async function ItemsPage() {
   // Get user and organization ID
@@ -24,12 +26,15 @@ export default async function ItemsPage() {
     brandMap[brand.id] = brand;
   });
 
+  const suppliers = await getSuppliersByOrganizationId(organizationId);
+
   return (
     <div className="">
       <ListingWrapper
         organizationId={organizationId}
         categoryMap={categoryMap}
         brandMap={brandMap}
+        suppliers={suppliers}
       />
     </div>
   );

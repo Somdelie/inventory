@@ -52,6 +52,7 @@ export async function GET(
         },
         include: {
           Organization: true,
+          items: true,
         },
         orderBy: {
           createdAt: "asc",
@@ -89,6 +90,7 @@ export async function GET(
         },
         include: {
           Organization: true,
+          items: true,
         },
         orderBy: {
           name: "asc",

@@ -24,6 +24,9 @@ export type InvitedUserProps = {
   organizationId: string;
   organizationName: string;
   roleId: string;
+  roleName: string;
+  locationId: string;
+  locationName: string;
 };
 export type UserProps = {
   name: string;

@@ -1,6 +1,7 @@
 import { db } from "@/prisma/db";
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 export async function GET(
   request: NextRequest,
@@ -14,15 +15,13 @@ export async function GET(
     const organizationId = id; // Get organizationId from params
 
     if (!apiKey) {
-      return NextResponse.json(
-        {
+      return new Response(
+        JSON.stringify({
           data: null,
           status: 401,
           error: "API key not found",
-          message: "API key not found",
           success: false,
-        },
-        { status: 401 }
+        })
       );
     }
 
@@ -31,11 +30,20 @@ export async function GET(
     // Check if pagination is requested
     const isPaginated = searchParams.has("page") || searchParams.has("limit");
 
+    // Check if filtering by isActive is requested
+    const isActiveFilter = searchParams.get("isActive");
+
+    // Build the where condition
+    const whereCondition: any = { organizationId };
+
+    // Apply isActive filter if provided
+    if (isActiveFilter !== null && isActiveFilter !== undefined) {
+      whereCondition.isActive = isActiveFilter === "true";
+    }
+
     // Get total count for pagination metadata
     const totalCount = await db.location.count({
-      where: {
-        organizationId,
-      },
+      where: whereCondition,
     });
 
     if (isPaginated) {
@@ -46,14 +54,9 @@ export async function GET(
 
       // Fetch paginated locations
       const locations = await db.location.findMany({
-        where: {
-          organizationId,
-        },
-        include: {
-          Organization: true,
-        },
+        where: whereCondition,
         orderBy: {
-          createdAt: "asc",
+          name: "asc",
         },
         skip,
         take: limit,
@@ -62,250 +65,95 @@ export async function GET(
       // Calculate pagination metadata
       const totalPages = Math.ceil(totalCount / limit);
 
-      // Return with consistent API response format
-      return NextResponse.json(
-        {
-          status: 200,
-          data: locations,
-          error: null,
-          message: "Locations retrieved successfully",
-          pagination: {
-            total: totalCount,
-            page,
-            limit,
-            totalPages,
-            hasNextPage: page < totalPages,
-            hasPrevPage: page > 1,
-          },
+      // Construct response with pagination metadata
+      const response = {
+        data: locations,
+        pagination: {
+          total: totalCount,
+          page,
+          limit,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
         },
-        { status: 200 }
-      );
+        success: true,
+      };
+
+      return new Response(JSON.stringify(response.data), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     } else {
       // If no pagination parameters, return all data
       const allLocations = await db.location.findMany({
-        where: {
-          organizationId,
-        },
-        include: {
-          Organization: true,
-        },
+        where: whereCondition,
         orderBy: {
           name: "asc",
         },
       });
 
-      // Return with consistent API response format
-      return NextResponse.json(
-        {
-          status: 200,
-          data: allLocations,
-          error: null,
-          message: "Locations retrieved successfully",
-        },
-        { status: 200 }
-      );
+      return new Response(JSON.stringify({ data: allLocations }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     }
   } catch (error) {
-    console.error("Error fetching suppliers:", error);
-    return NextResponse.json(
-      {
-        status: 500,
-        data: null,
-        error: "Internal Server Error",
-        message:
-          error instanceof Error ? error.message : "Unknown error occurred",
-      },
-      { status: 500 }
-    );
+    console.error("Error fetching locations:", error);
+    return new Response("Internal Server Error", { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    // Parse the request body
-    const locationData = await request.json();
+    const body = await request.json();
+    const { organizationId, ...data } = body; // Destructure organizationId from body
 
-    // Validate required fields
-    if (!locationData.name) {
-      return NextResponse.json(
-        {
-          status: 400,
-          data: null,
-          error: "Validation error",
-          message: "Name is required",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Create the supplier in database
-    const newLocation = await db.supplier.create({
-      data: {
-        name: locationData.name,
-        email: locationData.email || null,
-        phone: locationData.phone || null,
-        address: locationData.address || null,
-        taxId: locationData.taxId || null,
-        paymentTerms: locationData.paymentTerms || null,
-        notes: locationData.notes || null,
-        isActive: true,
-        organizationId: locationData.organizationId,
+    // Check if the location already exists
+    const existingLocation = await db.location.findFirst({
+      where: {
+        name: data.name,
+        organizationId: organizationId,
       },
     });
 
-    return NextResponse.json(
-      {
-        status: 200,
+    if (existingLocation) {
+      return new Response(
+        JSON.stringify({
+          status: 400,
+          error:
+            "Location already exists with the same name in this organization",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create a new location with the organizationId included in the data
+    const newLocation = await db.location.create({
+      data: {
+        ...data,
+        isActive: data.isActive ?? true,
+        organizationId, // Include organizationId in the location creation
+      },
+    });
+
+    revalidatePath("/dashboard/inventory/locations");
+
+    return new Response(
+      JSON.stringify({
+        status: 201,
+        message: "Location created successfully💐",
         data: newLocation,
-        error: null,
-        message: "Location created successfully",
-      },
-      { status: 201 }
+      }),
+      { status: 201, headers: { "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating location:", error);
-    return NextResponse.json(
-      {
+    return new Response(
+      JSON.stringify({
         status: 500,
-        data: null,
-        error: "Internal Server Error",
-        message:
-          error instanceof Error ? error.message : "Unknown error occurred",
-      },
-      { status: 500 }
-    );
-  }
-}
-
-// Update a supplier
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const locationData = await request.json();
-
-    // Validate required fields
-    if (!locationData.name) {
-      return NextResponse.json(
-        {
-          status: 400,
-          data: null,
-          error: "Validation error",
-          message: "Name is required",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if location exists
-    const existingLocation = await db.supplier.findUnique({
-      where: { id },
-    });
-
-    if (!existingLocation) {
-      return NextResponse.json(
-        {
-          status: 404,
-          data: null,
-          error: "Not found",
-          message: "Supplier not found",
-        },
-        { status: 404 }
-      );
-    }
-
-    // Update the supplier
-    const updatedLocation = await db.supplier.update({
-      where: { id },
-      data: {
-        name: locationData.name,
-        email: locationData.email || null,
-        phone: locationData.phone || null,
-        address: locationData.address || null,
-        taxId: locationData.taxId || null,
-        paymentTerms: locationData.paymentTerms || null,
-        notes: locationData.notes || null,
-        isActive: locationData.isActive ?? true,
-        updatedAt: new Date(),
-      },
-    });
-
-    return NextResponse.json(
-      {
-        status: 200,
-        data: updatedLocation,
-        error: null,
-        message: "Location updated successfully",
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Error updating location:", error);
-    return NextResponse.json(
-      {
-        status: 500,
-        data: null,
-        error: "Internal Server Error",
-        message:
-          error instanceof Error ? error.message : "Unknown error occurred",
-      },
-      { status: 500 }
-    );
-  }
-}
-
-// Delete a supplier
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-
-    // Check if supplier exists
-    const existingSupplier = await db.supplier.findUnique({
-      where: { id },
-    });
-
-    if (!existingSupplier) {
-      return NextResponse.json(
-        {
-          status: 404,
-          data: null,
-          error: "Not found",
-          message: "Supplier not found",
-        },
-        { status: 404 }
-      );
-    }
-
-    // Delete the supplier
-    const deletedSupplier = await db.supplier.delete({
-      where: { id },
-    });
-
-    return NextResponse.json(
-      {
-        status: 200,
-        data: deletedSupplier,
-        error: null,
-        message: "Supplier deleted successfully",
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Error deleting supplier:", error);
-    return NextResponse.json(
-      {
-        status: 500,
-        data: null,
-        error: "Internal Server Error",
-        message:
-          error instanceof Error ? error.message : "Unknown error occurred",
-      },
-      { status: 500 }
+        error: error.message || "Failed to create location",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }

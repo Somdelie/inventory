@@ -1,3 +1,5 @@
+import { SupplierDTO } from "./types";
+
 export type ItemPayload = {
   name: string;
   slug: string;
@@ -37,19 +39,21 @@ export interface PaginatedResponse<T> {
   pagination: Pagination;
 }
 
+// / Updated ItemCreateDTO interface
 export interface ItemCreateDTO {
-  data: ItemPayload;
   name: string;
-  slug: string;
-  sku: string;
+  slug?: string;
+  sku?: string;
   description?: string;
   organizationId: string;
   categoryId: string;
   brandId: string;
   sellingPrice: number;
   costPrice: number;
-  thumbnail?: string | null; // Use string type for thumbnail if it's a URL
-  quantity?: number; // Optional field for quantity
+  thumbnail?: string | null;
+  quantity?: number;
+  // Change to string[] to match what we're using in the form
+  suppliers?: string[];
 }
 
 export interface ItemUpdateDTO {
@@ -64,6 +68,7 @@ export interface ItemUpdateDTO {
   sellingPrice?: number;
   costPrice?: number;
   thumbnail?: string | null; // Changed from File to string to match how you're using it
+  suppliers: SupplierDTO[]; // Assuming you have a SupplierDTO type defined elsewhere
 }
 
 interface Category {
@@ -108,6 +113,11 @@ interface TaxRate {
   organizationId: string;
 }
 
+export interface SimpleSupplierDTO {
+  id: string;
+  name: string;
+  // Add any other fields you actually use in your UI
+}
 interface Item {
   id: string;
   name: string;
@@ -148,6 +158,7 @@ interface Item {
   brand: Brand;
   unit: Unit | null;
   taxRate: TaxRate | null;
+  suppliers: SimpleSupplierDTO[]; // Use simplified supplier type
 }
 
 interface ItemResponse {
@@ -155,6 +166,7 @@ interface ItemResponse {
   status: number;
   error: string | null;
   success: boolean;
+  suppliers: SupplierDTO[]; // Full supplier objects
 }
 
 // Export the interfaces

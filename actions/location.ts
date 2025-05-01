@@ -93,6 +93,7 @@ export async function deleteLocation(id: string) {
 }
 
 export async function updateLocation(data: LocationProps, id: string) {
+  // console.log("Updating location with data:", data, "and id:", id);
   try {
     // Ensure we have a valid location ID
     const locationId = id || data.id;
@@ -105,11 +106,8 @@ export async function updateLocation(data: LocationProps, id: string) {
       };
     }
 
-    // Remove id from the update data as it's not needed in the update payload
-    const { id: _, ...updateData } = data;
-
     // Ensure required fields are present
-    if (!updateData.name || !updateData.organizationId || !updateData.type) {
+    if (!data.name || !data.organizationId || !data.type) {
       return {
         status: 400,
         message: "Name, organization ID, and type are required",
@@ -119,8 +117,8 @@ export async function updateLocation(data: LocationProps, id: string) {
     }
 
     const response = await api.put(
-      `/organizations/inventory/location/${locationId}`,
-      updateData
+      `/organizations/locations/${locationId}`,
+      data
     );
 
     revalidatePath("/dashboard/inventory/locations");
@@ -151,12 +149,14 @@ export async function updateLocation(data: LocationProps, id: string) {
 
 export async function getLocationById(id: string) {
   try {
-    const location = await db.location.findUnique({
-      where: {
-        id,
-      },
-    });
-    return location;
+    // Use the API to get the location by ID through query params
+    const response = await api.get(`/organizations/locations/${id}`);
+
+    if (response.data && response.data.data) {
+      return response.data.data;
+    }
+
+    return null;
   } catch (error) {
     console.log(error);
     return null;

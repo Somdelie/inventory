@@ -115,6 +115,8 @@ export default function LocationsListing({
     organizationId
   );
 
+  console.log("current location id", currentLocation?.id);
+
   // Form for editing/adding locations
   const form = useForm<z.infer<typeof LocationFormSchema>>({
     resolver: zodResolver(LocationFormSchema),
@@ -424,7 +426,7 @@ export default function LocationsListing({
           createLocationMutation.isPending || updateLocationMutation.isPending
         }
         submitLabel={currentLocation ? "Save Changes" : "Add Location"}
-        size="md"
+        size="lg"
       >
         <div className="col-span-1 md:col-span-2">
           <FormField

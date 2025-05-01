@@ -6,6 +6,7 @@ export default function ListingWrapper(props: {
   organizationId: string;
   categoryMap: any;
   brandMap: any;
+  suppliers: any;
 }) {
   return (
     // The fallback was being rendered but the component wasn't suspending properly
@@ -15,6 +16,7 @@ export default function ListingWrapper(props: {
         organizationId={props.organizationId}
         categoryMap={props.categoryMap}
         brandMap={props.brandMap}
+       suppliers={props.suppliers} // Pass suppliers prop to ItemsListing
       />
     </Suspense>
   );

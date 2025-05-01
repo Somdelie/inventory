@@ -18,12 +18,16 @@ export default function RegisterInvitedUserForm({
   userEmail,
   organizationId,
   roleId,
+  locationId,
+  locationName,
   organizationName,
 }: {
   userEmail: string;
   organizationId: string;
   roleId: string;
   organizationName: string;
+  locationId: string;
+  locationName: string;
 }) {
   const [loading, setLoading] = useState(false);
   const [emailErr, setEmailErr] = useState<string | null>(null);
@@ -38,15 +42,23 @@ export default function RegisterInvitedUserForm({
   } = useForm<InvitedUserProps>({
     defaultValues: {
       email: userEmail,
+      organizationId: organizationId,
+      organizationName: organizationName,
+      roleId: roleId,
+      locationId: locationId,
+      locationName: locationName,
     },
   });
   const router = useRouter();
 
   async function onSubmit(data: InvitedUserProps) {
+    console.log("Form Data", data);
     setLoading(true);
     data.organizationId = organizationId;
     data.roleId = roleId;
     data.organizationName = organizationName;
+    data.locationId = locationId;
+    data.locationName = locationName;
 
     try {
       const res = await createInvitedUser(data);
@@ -114,6 +126,7 @@ export default function RegisterInvitedUserForm({
                 />
 
                 <TextInput
+                  readOnly={true}
                   type="email"
                   register={register}
                   errors={errors}

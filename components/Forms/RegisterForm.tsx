@@ -220,7 +220,6 @@ export default function RegisterForm() {
                   name="email"
                   icon={Mail}
                   placeholder="Email Address"
-                  isRequired={false}
                 />
                 <PasswordInput
                   register={register}
@@ -238,7 +237,6 @@ export default function RegisterForm() {
                   name="organizationName"
                   icon={Building}
                   placeholder="Organization Name"
-                  isRequired={false}
                 />
                 <div className="">
                   {emailErr && (

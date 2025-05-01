@@ -27,15 +27,19 @@ import { toast } from "sonner";
 import { generateSlug } from "@/lib/generateSlug";
 import TextArea from "@/components/FormInputs/TextAreaInput";
 import { ItemCreateDTO } from "@/types/itemTypes";
+import { SupplierDTO } from "@/types";
+import { MultiSelect } from "@/components/Forms/MultiSelect";
 
 export function ItemForm({
   organizationId,
   categoryMap,
   brandMap,
+  supplierMap,
 }: {
   organizationId: string;
   categoryMap: { [key: string]: CategoryDTO };
   brandMap: { [key: string]: BrandDTO };
+  supplierMap: { [key: string]: SupplierDTO };
 }) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -48,51 +52,59 @@ export function ItemForm({
   } = useForm<ItemCreateDTO>();
 
   const saveItem = async (data: ItemCreateDTO) => {
-    try {
-      setLoading(true);
+    console.log("Saving item:", data);
+    // try {
+    //   setLoading(true);
 
-      // Add organization ID to data
-      data.organizationId = organizationId;
+    //   // Add organization ID to data
+    //   data.organizationId = organizationId;
 
-      // Generate SKU using the item name and selected category/brand
-      const brandName = data.brandId ? brandMap[data.brandId]?.name : null;
-      const categoryName = data.categoryId
-        ? categoryMap[data.categoryId]?.title
-        : null;
+    //   // Generate SKU using the item name and selected category/brand
+    //   const brandName = data.brandId ? brandMap[data.brandId]?.name : null;
+    //   const categoryName = data.categoryId
+    //     ? categoryMap[data.categoryId]?.title
+    //     : null;
 
-      // Generate SKU with more context
-      data.sku = generateSKU(data.name, brandName, categoryName);
-      data.slug = generateSlug(data.name);
+    //   // Generate SKU with more context
+    //   data.sku = generateSKU(data.name, brandName, categoryName);
+    //   data.slug = generateSlug(data.name);
 
-      const res = await createItem(data, organizationId);
+    //   const res = await createItem(data, organizationId);
 
-      if (res?.status === 201) {
-        // Changed from 2001 to 201
-        setLoading(false);
-        toast.success(res.message, {
-          style: {
-            background: "green",
-            color: "#fff",
-          },
-        });
-        window.location.reload();
-        reset();
-        setOpen(false);
-      } else {
-        setLoading(false);
-        toast.error(res?.message, {
-          style: {
-            background: "#EF4444",
-            color: "#fff",
-          },
-        });
-      }
-    } catch (error) {
-      setLoading(false);
-      console.log(error);
-      toast.error("Something went wrong");
-    }
+    //   if (res?.status === 201) {
+    //     setLoading(false);
+    //     toast.success(res.message, {
+    //       style: {
+    //         background: "green",
+    //         color: "#fff",
+    //       },
+    //     });
+    //     window.location.reload();
+    //     reset();
+    //     setOpen(false);
+    //   } else {
+    //     setLoading(false);
+    //     toast.error(res?.message, {
+    //       style: {
+    //         background: "#EF4444",
+    //         color: "#fff",
+    //       },
+    //     });
+    //   }
+    // } catch (error) {
+    //   setLoading(false);
+    //   console.log(error);
+    //   toast.error("Something went wrong");
+    // }
   };
+
+  // Create supplier options for the MultiSelect
+  const supplierOptions = Object.entries(supplierMap || {}).map(
+    ([id, data]) => ({
+      label: data.name,
+      value: id,
+    })
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -183,6 +195,27 @@ export function ItemForm({
                 {errors.brandId && (
                   <p className="text-red-500 text-sm">Brand is required</p>
                 )}
+              </div>
+
+              {/* Multiple Suppliers Selection */}
+              <div className="grid gap-1.5">
+                <label htmlFor="suppliers" className="text-sm font-medium">
+                  Suppliers
+                </label>
+                <Controller
+                  name="suppliers"
+                  control={control}
+                  defaultValue={[]}
+                  render={({ field }) => (
+                    <MultiSelect
+                      options={supplierOptions}
+                      selected={field.value || []}
+                      onChange={field.onChange}
+                      placeholder="Select Suppliers"
+                      emptyMessage="No suppliers available"
+                    />
+                  )}
+                />
               </div>
 
               {/* selling price */}

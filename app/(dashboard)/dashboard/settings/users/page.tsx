@@ -10,15 +10,30 @@ import { getAuthenticatedUser } from "@/config/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InvitationsTable } from "@/components/dashboard/Tables/InvitationsTable";
 import { getOrgRoles } from "@/actions/roles";
+import { getLocationsByOrganizationId } from "@/actions/location";
+import { getOrganizationById } from "@/actions/organization";
 
 export default async function page() {
   const user = await getAuthenticatedUser();
+
+  const userOrganization = await getOrganizationById(
+    user?.organizationId ?? ""
+  );
+
+  console.log("User Organization", userOrganization);
 
   const organizationId = user?.organizationId ?? "";
   const organizationName = user?.organizationName ?? "";
   const users = await getUsersByOrganizationId(organizationId);
   const invitations = await getOrganizationInvitations(organizationId);
   const res = await getOrgRoles(organizationId);
+  const locationData = await getLocationsByOrganizationId(organizationId);
+  const locations = locationData.map((location) => {
+    return {
+      label: location.name,
+      value: location.id,
+    };
+  });
   const rolesData = res.data || [];
   const roles = rolesData.map((role) => {
     return {
@@ -26,6 +41,8 @@ export default async function page() {
       value: role.id,
     };
   });
+
+  console.log("Locations Data", locationData);
 
   return (
     <div className="p-8">
@@ -50,6 +67,7 @@ export default async function page() {
             model="user"
             modalForm={
               <UserInvitationForm
+                locations={locations}
                 roles={roles}
                 organizationId={organizationId}
                 organizationName={organizationName}

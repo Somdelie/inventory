@@ -6,19 +6,14 @@ import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { AuthenticatedUser } from "@/config/useAuth";
-import { generateSlug } from "@/lib/generateSlug";
-import { Loader2, Plus, PlusCircle, SendIcon } from "lucide-react";
+import { Loader2, SendIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MdInsertInvitation } from "react-icons/md";
 import { toast } from "sonner";
 
@@ -28,13 +23,20 @@ export type UserInvitationData = {
   organizationName: string;
   roleId: string;
   roleName: string;
+  locationId: string;
+  locationName: string;
 };
 
 export function UserInvitationForm({
   roles,
+  locations,
   organizationId,
   organizationName,
 }: {
+  locations: {
+    label: string;
+    value: string;
+  }[];
   roles: {
     label: string;
     value: string;
@@ -45,20 +47,50 @@ export function UserInvitationForm({
   const [email, setEmail] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<any>(roles[0]);
+  const [selectedRole, setSelectedRole] = useState<any>(null);
+  const [selectedLocation, setSelectedLocation] = useState<any>(null);
   const router = useRouter();
+
+  // Set default values when props are available and not empty
+  useEffect(() => {
+    if (roles && roles.length > 0) {
+      setSelectedRole(roles[0]);
+    }
+
+    if (locations && locations.length > 0) {
+      setSelectedLocation(locations[0]);
+    }
+  }, [roles, locations]);
+
   const sendInvitation = async () => {
     if (!email.trim()) {
       setErr("Email is required");
       return;
     }
-    const data: UserInvitationData = {
-      email: email,
-      organizationId: organizationId,
-      organizationName: organizationName,
-      roleId: selectedRole.value as string,
+
+    // Check if role and location are selected
+    if (!selectedRole?.value) {
+      setErr("Please select a valid role");
+      return;
+    }
+
+    if (!selectedLocation?.value) {
+      setErr("Please select a valid location");
+      return;
+    }
+
+    const data = {
+      email: email.trim(),
+      organizationId,
+      organizationName,
+      roleId: selectedRole.value,
       roleName: selectedRole.label,
+      locationId: selectedLocation.value,
+      locationName: selectedLocation.label,
     };
+
+    console.log("Invitation Data", data);
+
     try {
       setLoading(true);
       const res = await sendInvite(data);
@@ -90,6 +122,11 @@ export function UserInvitationForm({
       return;
     }
   };
+
+  // Disable the button if necessary data is missing
+  const isFormValid =
+    email.trim() && selectedRole?.value && selectedLocation?.value;
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -114,32 +151,40 @@ export function UserInvitationForm({
                 type="text"
                 placeholder="user@gmail.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && sendInvitation()}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (e.target.value.trim()) setErr("");
+                }}
               />
               {err && <p className="text-red-500 -mt-1">{err}</p>}
+
               <FormSelectInput
                 label="User Role"
-                options={roles}
+                options={roles || []}
                 option={selectedRole}
                 setOption={setSelectedRole}
               />
+
+              <FormSelectInput
+                label="Location"
+                options={locations || []}
+                option={selectedLocation}
+                setOption={setSelectedLocation}
+              />
+
               {loading ? (
                 <Button disabled>
                   <Loader2 className="animate-spin mr-2 h-4 w-4" />
                   Please wait...
                 </Button>
               ) : (
-                <Button onClick={sendInvitation}>
+                <Button onClick={sendInvitation} disabled={!isFormValid}>
                   <SendIcon className="mr-2 h-4 w-4" /> Invite User
                 </Button>
               )}
             </div>
           </CardFooter>
         </Card>
-        {/* <DialogFooter>
-          <Button type="submit">Save changes</Button>
-        </DialogFooter> */}
       </DialogContent>
     </Dialog>
   );

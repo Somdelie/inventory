@@ -46,12 +46,14 @@ import { ImageInput } from "@/components/reusable-ui/image-upload"; // Using you
 import { useRouter } from "next/navigation";
 import { useFileDelete } from "@/hooks/useFileDelete"; // Import the file deletion hook
 import { formatPrice } from "@/lib/formatPrice";
+import { MultiSelect } from "@/components/Forms/MultiSelect";
 
 interface ItemsListingProps {
   title: string;
   organizationId: string;
   categoryMap: Record<string, { id: string; title: string }>;
   brandMap: Record<string, { id: string; name: string }>;
+  suppliers: Record<string, { id: string; name: string }> | null;
 }
 
 // Form schema for editing/adding items
@@ -59,21 +61,41 @@ const itemFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   categoryId: z.string().min(1, "Category is required"),
   brandId: z.string().min(1, "Brand is required"),
+  // Change this to accept an array of strings instead of SupplierDTO objects
+  suppliers: z.array(z.string()).optional(),
   sellingPrice: z.coerce.number().min(1, "Selling price is required"),
   costPrice: z.coerce.number().min(1, "Cost price is required"),
 });
-
 export default function ItemsListing({
   title,
   organizationId,
   categoryMap,
   brandMap,
+  suppliers,
 }: ItemsListingProps) {
   // Move this inside a useEffect to prevent state updates during render
   const [itemsData, setItemsData] = useState<Item[]>([]);
   const { items, refetch } = useOrgItems(organizationId);
   const { deleteFile } = useFileDelete(); // For deleting old images
+  // Modified mapping code with additional checks
 
+  console.log("Suppliers:", suppliers);
+
+  const mappedSuppliers = suppliers
+    ? typeof suppliers === "object" &&
+      !Array.isArray(suppliers) &&
+      suppliers !== null
+      ? Object.entries(suppliers).map(([id, data]) => {
+          console.log("Mapping supplier:", id, data);
+          return {
+            label: data?.name || "Unknown Supplier",
+            value: id,
+          };
+        })
+      : []
+    : [];
+
+  // console.log("Mapped Suppliers:", mappedSuppliers);
   const router = useRouter();
 
   // Use useEffect to update local state after items are fetched
@@ -91,21 +113,6 @@ export default function ItemsListing({
   const [isExporting, setIsExporting] = useState(false);
   const [currentItem, setCurrentItem] = useState<Item | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null);
-
-  // Function to reset the form and close the modal
-  const resetFormAndCloseModal = useCallback(() => {
-    setCurrentItem(null);
-    setFormDialogOpen(false);
-    setImageUrl("");
-    setPreviousImageUrl("");
-    form.reset({
-      name: "",
-      categoryId: "",
-      brandId: "",
-      sellingPrice: 0,
-      costPrice: 0,
-    });
-  }, []);
 
   // Create item mutation with success handlers
   const createItemMutation = useCreateItem(organizationId, {
@@ -129,21 +136,24 @@ export default function ItemsListing({
       name: "",
       categoryId: "",
       brandId: "",
-      sellingPrice: 0, // Use string here to match input value
-      costPrice: 0, // Use string here to match input value
+      suppliers: [], // Initialize as empty array
+      sellingPrice: 0,
+      costPrice: 0,
     },
   });
-
-  // Update form when current item changes
+  // Replace your existing form reset effect with this
   useEffect(() => {
     if (currentItem) {
       form.reset({
         name: currentItem.name,
         categoryId: currentItem.categoryId || "",
         brandId: currentItem.brandId || "",
-        sellingPrice: currentItem.sellingPrice, // Convert to string for form input
+        // Convert suppliers array to just IDs
+        suppliers: currentItem.suppliers?.map((supplier) => supplier.id) || [],
+        sellingPrice: currentItem.sellingPrice,
         costPrice: currentItem.costPrice,
       });
+
       // Also update the imageUrl state
       if (currentItem.thumbnail) {
         setImageUrl(currentItem.thumbnail);
@@ -154,13 +164,30 @@ export default function ItemsListing({
         name: "",
         categoryId: "",
         brandId: "",
-        sellingPrice: 0, // Use string here
-        costPrice: 0, // Use string here
+        suppliers: [], // Initialize as empty array
+        sellingPrice: 0,
+        costPrice: 0,
       });
       setImageUrl("");
       setPreviousImageUrl("");
     }
   }, [currentItem, form]);
+
+  // Also update your resetFormAndCloseModal function
+  const resetFormAndCloseModal = useCallback(() => {
+    setCurrentItem(null);
+    setFormDialogOpen(false);
+    setImageUrl("");
+    setPreviousImageUrl("");
+    form.reset({
+      name: "",
+      categoryId: "",
+      brandId: "",
+      suppliers: [], // Important: include suppliers in reset
+      sellingPrice: 0,
+      costPrice: 0,
+    });
+  }, [form]);
 
   // Custom handler for image URL changes with cleanup logic
   const handleImageChange = async (url: string) => {
@@ -290,6 +317,7 @@ export default function ItemsListing({
 
   const onSubmit = async (data: ItemCreateDTO) => {
     setIsSubmitting(true);
+    // console.log("Submitting form data:", data);
 
     try {
       if (!currentItem) {
@@ -308,6 +336,7 @@ export default function ItemsListing({
           thumbnail: imageUrl,
           categoryId: data.categoryId || "",
           brandId: data.brandId || "",
+          suppliers: data.suppliers || [],
           sku: generateSKU(data.name, brandName, categoryName),
           slug: generateSlug(data.name),
         };
@@ -332,6 +361,11 @@ export default function ItemsListing({
           costPrice: Number(data.costPrice),
           categoryId: data.categoryId,
           brandId: data.brandId,
+          suppliers: (data.suppliers || []).map((id) => {
+            return suppliers && suppliers[id]
+              ? { id, name: suppliers[id].name }
+              : { id, name: "Unknown Supplier" };
+          }),
           thumbnail: imageUrl,
           organizationId,
           updatedAt: new Date(),
@@ -605,6 +639,51 @@ export default function ItemsListing({
             </FormItem>
           )}
         />
+
+        <div className="col-span-2">
+          <FormField
+            control={form.control}
+            name="suppliers"
+            render={({ field }) => {
+              // Ensure field.value is always an array
+              const supplierIds = Array.isArray(field.value) ? field.value : [];
+
+              console.log("Selected supplier IDs:", supplierIds);
+
+              // Create supplier options from the array structure
+              const supplierOptions = Array.isArray(suppliers)
+                ? suppliers.map((supplier) => ({
+                    label: supplier.name,
+                    value: supplier.id,
+                  }))
+                : [];
+
+              console.log("Supplier options:", supplierOptions);
+
+              return (
+                <FormItem>
+                  <FormLabel>Suppliers</FormLabel>
+                  <FormControl>
+                    <MultiSelect
+                      options={supplierOptions}
+                      selected={supplierIds}
+                      onChange={(selected) => {
+                        console.log("MultiSelect onChange:", selected);
+                        field.onChange(selected);
+                      }}
+                      placeholder="Select suppliers"
+                      emptyMessage="No suppliers available"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Select the suppliers for this item
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
+        </div>
 
         <FormField
           control={form.control}

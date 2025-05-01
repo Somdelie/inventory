@@ -47,6 +47,7 @@ export async function GET(
         brand: true,
         unit: true,
         taxRate: true,
+        suppliers: true,
       },
     });
     return new Response(

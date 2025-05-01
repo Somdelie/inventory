@@ -53,6 +53,7 @@ export async function GET(
           brand: true,
           unit: true,
           taxRate: true,
+          suppliers: true,
         },
         orderBy: {
           // name: "asc",
@@ -94,6 +95,7 @@ export async function GET(
           brand: true,
           unit: true,
           taxRate: true,
+          suppliers: true,
         },
         orderBy: {
           name: "asc",
@@ -114,27 +116,28 @@ export async function GET(
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { organizationId, ...data } = body; // Destructure organizationId from body
+    // Destructure suppliers separately to handle it properly
+    const { organizationId, suppliers, ...restData } = body;
 
     const numericSellingPrice =
-      typeof data.sellingPrice === "string"
-        ? parseFloat(data.sellingPrice)
-        : data.sellingPrice;
+      typeof restData.sellingPrice === "string"
+        ? parseFloat(restData.sellingPrice)
+        : restData.sellingPrice;
 
     const numericCostPrice =
-      typeof data.costPrice === "string"
-        ? parseFloat(data.costPrice)
-        : data.costPrice;
+      typeof restData.costPrice === "string"
+        ? parseFloat(restData.costPrice)
+        : restData.costPrice;
 
     const numericQuantity =
-      typeof data.quantity === "string"
-        ? parseInt(data.quantity, 10)
-        : data.quantity;
+      typeof restData.quantity === "string"
+        ? parseInt(restData.quantity, 10)
+        : restData.quantity;
 
-    // Check if the item already exists but it can be created with the same name only if the organizationId is different
+    // Check if the item already exists
     const existingItem = await db.item.findFirst({
       where: {
-        name: data.name,
+        name: restData.name,
         organizationId: organizationId,
       },
     });
@@ -149,17 +152,41 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create a new item with the organizationId included in the data
+    // Create a new item without the supplier connections first
     const newItem = await db.item.create({
       data: {
-        ...data,
+        ...restData,
         sellingPrice: numericSellingPrice,
         costPrice: numericCostPrice,
-        quantity: numericQuantity,
+        quantity: numericQuantity || 0,
         minStockLevel: numericQuantity || 0,
-        organizationId, // Include organizationId in the item creation
+        organizationId,
       },
     });
+
+    // If suppliers are provided, create the connections separately
+    if (Array.isArray(suppliers) && suppliers.length > 0) {
+      // Validate supplier IDs exist
+      const validSuppliers = await db.supplier.findMany({
+        where: {
+          id: { in: suppliers.map((id) => String(id)) },
+        },
+        select: { id: true },
+      });
+
+      const validSupplierIds = validSuppliers.map((s) => ({ id: s.id }));
+
+      if (validSupplierIds.length > 0) {
+        await db.item.update({
+          where: { id: newItem.id },
+          data: {
+            suppliers: {
+              connect: validSupplierIds,
+            },
+          },
+        });
+      }
+    }
 
     revalidatePath("/dashboard/inventory/items");
 

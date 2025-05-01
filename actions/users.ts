@@ -283,7 +283,20 @@ export async function createInvitedUser(data: InvitedUserProps) {
     organizationId,
     roleId,
     organizationName,
+    locationId,
+    locationName,
   } = data;
+
+  console.log("Creating invited user:", data);
+
+  // Check if organizationId is undefined
+  if (!organizationId) {
+    return {
+      error: "Organization ID is required",
+      status: 400,
+      data: null,
+    };
+  }
 
   // Combine firstName and lastName to create the name field
   const name = `${firstName} ${lastName}`.trim();
@@ -330,8 +343,13 @@ export async function createInvitedUser(data: InvitedUserProps) {
           phone,
           image,
           isVerfied: true,
-          organizationId: organizationId,
           organizationName: organizationName,
+          locationName: locationName,
+          Organization: {
+            connect: {
+              id: organizationId,
+            },
+          },
           roles: {
             connect: {
               id: roleId,
@@ -340,7 +358,8 @@ export async function createInvitedUser(data: InvitedUserProps) {
         },
         include: {
           roles: true,
-          Organization: true,
+          location: true,
+          Organization: true, // Include organization data
         },
       });
 
@@ -374,7 +393,16 @@ export async function createInvitedUser(data: InvitedUserProps) {
 
 // send invite to user to join organization
 export async function sendInvite(data: UserInvitationData) {
-  const { email, roleId, organizationId, roleName, organizationName } = data;
+  console.log("Sending invite to user:", data);
+  const {
+    email,
+    roleId,
+    organizationId,
+    roleName,
+    organizationName,
+    locationId,
+    locationName,
+  } = data;
 
   // Combine firstName and lastName to create the name field
   // const name = `${firstName} ${lastName}`.trim();
@@ -416,7 +444,9 @@ export async function sendInvite(data: UserInvitationData) {
     });
 
     // send email with invitation link
-    const linkUrl = `${baseUrl}/user-invite/${organizationId}?roleId=${roleId}&email=${email}&organizationName=${organizationName}`;
+    const linkUrl = `${baseUrl}/user-invite/${organizationId}?roleId=${roleId}&email=${email}&organizationName=${organizationName}&locationId=${locationId}&locationName=${locationName}`;
+
+    console.log("Invitation link URL:", linkUrl);
     const { data, error } = await resend.emails.send({
       from: "Somdelie Inventory <admin@cautiousndlovu.co.za>",
       to: email,
