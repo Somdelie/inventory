@@ -384,6 +384,7 @@ export default function LocationsListing({
     <div>
       <DataTable<LocationDTO>
         title={title}
+        buttonTitle="Location"
         emptyStateModalTitle="Your Location List is Empty"
         emptyStateModalDescription="Create your first Location to get started with inventory management."
         subtitle={
