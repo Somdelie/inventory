@@ -153,6 +153,7 @@ export type SupplierDTO = {
   notes?: string | null;
   isActive?: boolean;
   organizationId: string;
+  isPreferred?: boolean;
   createdAt?: Date;
   updatedAt?: Date | null;
 };

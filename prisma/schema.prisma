@@ -476,6 +476,9 @@ model PurchaseOrder {
   id                   String              @id @default(cuid())
   poNumber             String              @unique
   date                 DateTime
+  supplierName         String?
+  supplierEmail        String?
+  supplierPhone        String?
   status               PurchaseOrderStatus @default(DRAFT)
   subtotal             Float
   taxAmount            Float

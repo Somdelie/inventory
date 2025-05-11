@@ -35,6 +35,8 @@ export async function createSupplier(data: SupplierDTO) {
     });
 
     revalidatePath(`/dashboard/purchases/suppliers`);
+    revalidatePath(`/dashboard/inventory/items/[id]/suppliers`);
+    revalidatePath("/dashboard/inventory/items");
     return {
       status: 200,
       message: "Supplier created successfully",
@@ -122,7 +124,7 @@ export async function updateSupplier(data: Supplier, id: string) {
     }
 
     const response = await api.put(
-      `/organizations/purchases/supplier/${supplierId}`,
+      `/organizations/purchases/suppliers/${supplierId}`,
       updateData
     );
 
@@ -159,6 +161,49 @@ export async function getSupplierById(id: string) {
       },
     });
     return supplier;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+}
+
+export async function getSuppliersByItemId(itemId: string) {
+  try {
+    const suppliers = await db.supplier.findMany({
+      where: {
+        items: {
+          some: {
+            id: itemId,
+          },
+        },
+      },
+      include: {
+        items: true,
+      },
+    });
+    return suppliers;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+}
+
+// get brief suppliers by organization id
+export async function getBriefSuppliersByOrganizationId(
+  organizationId: string
+) {
+  try {
+    const suppliers = await db.supplier.findMany({
+      where: {
+        organizationId,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+    return suppliers;
   } catch (error) {
     console.log(error);
     return null;

@@ -118,6 +118,18 @@ export interface SimpleSupplierDTO {
   name: string;
   // Add any other fields you actually use in your UI
 }
+
+export interface ItemSupplierRelation {
+  id: string;
+  itemId: string;
+  supplierId: string;
+  isPreferred: boolean;
+  supplier: {
+    id: string;
+    name: string;
+  };
+}
+
 interface Item {
   id: string;
   name: string;
@@ -159,6 +171,7 @@ interface Item {
   unit: Unit | null;
   taxRate: TaxRate | null;
   suppliers: SimpleSupplierDTO[]; // Use simplified supplier type
+  supplierRelations?: ItemSupplierRelation[]; // Add this field
 }
 
 interface ItemResponse {

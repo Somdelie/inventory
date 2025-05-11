@@ -62,7 +62,7 @@ async function EditItemContent({
   return (
     <div className="space-y-2">
       <Link
-        href="/items"
+        href="/dashboard/inventory/items"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors mb-2"
       >
         <ArrowLeft className="h-4 w-4" />

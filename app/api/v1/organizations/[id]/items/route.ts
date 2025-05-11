@@ -3,6 +3,8 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
 
+// Update the GET function in your API route to include supplierRelations
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -54,9 +56,13 @@ export async function GET(
           unit: true,
           taxRate: true,
           suppliers: true,
+          supplierRelations: {
+            include: {
+              supplier: true,
+            },
+          },
         },
         orderBy: {
-          // name: "asc",
           createdAt: "asc",
         },
         skip,
@@ -96,6 +102,11 @@ export async function GET(
           unit: true,
           taxRate: true,
           suppliers: true,
+          supplierRelations: {
+            include: {
+              supplier: true,
+            },
+          },
         },
         orderBy: {
           name: "asc",

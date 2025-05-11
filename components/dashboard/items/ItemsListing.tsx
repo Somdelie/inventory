@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { DollarSign } from "lucide-react";
+import { DollarSign, View, ViewIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import {
   DataTable,
@@ -47,6 +47,7 @@ import { useRouter } from "next/navigation";
 import { useFileDelete } from "@/hooks/useFileDelete"; // Import the file deletion hook
 import { formatPrice } from "@/lib/formatPrice";
 import { MultiSelect } from "@/components/Forms/MultiSelect";
+import Link from "next/link";
 
 interface ItemsListingProps {
   title: string;
@@ -468,18 +469,33 @@ export default function ItemsListing({
         </span>
       ),
     },
-    {
-      header: "Category",
-      accessorKey: "categoryId",
-      cell: (row) => (
-        <span className="font-medium line-clamp-1">
-          {truncatedText(
-            categoryMap[row.categoryId]?.title || "Uncategorized",
-            20
-          )}
-        </span>
-      ),
+   {
+    header: "Suppliers",
+    accessorKey: "supplierRelations",
+    cell: (row) => {
+      // First check if supplierRelations exists and is an array
+      const supplierCount = Array.isArray(row.supplierRelations) 
+        ? row.supplierRelations.length 
+        : 0;
+      
+      return (
+        <Link
+          className="font-medium flex items-center justify-between
+           gap-1.5 border border-primary/70 hover:border-primary hover:bg-primary/5 transition-all rounded px-3 py-1.5 text-sm hover:shadow-sm"
+          href={`/dashboard/inventory/items/${row.id}/suppliers`}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent row click event
+          }}
+        >
+          <span>{supplierCount}</span>
+          <span className="text-xs">
+            {supplierCount === 1 ? "supplier" : "suppliers"}
+          </span>
+          <ViewIcon className="h-3.5 w-3.5 text-primary/80" />
+        </Link>
+      );
     },
+  },
     {
       header: "Brand",
       accessorKey: "brandId",
