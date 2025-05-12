@@ -1,12 +1,10 @@
 // pages/dashboard/inventory/items/index.tsx
 import React from "react";
-import { Suspense } from "react";
 import { getAuthenticatedUser } from "@/config/useAuth";
 import { getBrandsByOrganizationId } from "@/actions/brands";
 import { BrandDTO, CategoryDTO } from "@/types/types";
 import { getCategoriesByOrganizationId } from "@/actions/categories";
 import ListingWrapper from "@/components/dashboard/items/listing-wrapper";
-import { SupplierDTO } from "@/types";
 import { getSuppliersByOrganizationId } from "@/actions/suppliers";
 
 export default async function ItemsPage() {

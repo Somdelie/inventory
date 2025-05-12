@@ -82,19 +82,6 @@ export default function ItemsListing({
 
   console.log("Suppliers:", suppliers);
 
-  const mappedSuppliers = suppliers
-    ? typeof suppliers === "object" &&
-      !Array.isArray(suppliers) &&
-      suppliers !== null
-      ? Object.entries(suppliers).map(([id, data]) => {
-          console.log("Mapping supplier:", id, data);
-          return {
-            label: data?.name || "Unknown Supplier",
-            value: id,
-          };
-        })
-      : []
-    : [];
 
   // console.log("Mapped Suppliers:", mappedSuppliers);
   const router = useRouter();

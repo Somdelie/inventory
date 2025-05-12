@@ -508,6 +508,7 @@ model PurchaseOrder {
   lines              PurchaseOrderLine[]
   goodsReceipts      GoodsReceipt[]
   items              Item[]
+  confirmationTokens ConfirmationToken[]
   Location           Location?           @relation(fields: [locationId], references: [id])
   locationId         String?
 
@@ -829,3 +830,25 @@ model AdjustmentLine {
   @@index([adjustmentId])
   @@index([itemId])
 }
+
+// Add this to your schema.prisma file
+
+model ConfirmationToken {
+  id              String        @id @default(cuid())
+  token           String        @unique
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+  expiresAt       DateTime
+  usedAt          DateTime?
+
+  @@index([token])
+  @@index([purchaseOrderId])
+}
+
+// Make sure to also update your PurchaseOrder model to include the relation:
+
+// model PurchaseOrder {
+//   // ... existing fields
+//   confirmationTokens ConfirmationToken[]
+// }

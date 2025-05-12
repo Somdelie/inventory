@@ -103,7 +103,7 @@ export async function getItemsByOrganizationId(
         "x-api-key": `${apiKey?.data?.key}`,
       },
     });
-    console.log("Items fetched successfully:", response.data.data);
+    // console.log("Items fetched successfully:", response.data.data);
     // Return the items array directly from the nested data property
     return response.data.data || [];
   } catch (error) {

@@ -176,6 +176,7 @@ export interface CompletePurchaseOrder extends PurchaseOrder {
 
 // Input type for updating a purchase order
 export interface UpdatePurchaseOrderInput {
+  id: string;
   poNumber?: string;
   date?: Date;
   supplierName?: string;
