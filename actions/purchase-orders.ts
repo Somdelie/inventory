@@ -275,41 +275,17 @@ export async function getPurchaseOrderNumber(organizationId: string) {
 }
 
 // Get purchase order count for an organization (used for generating PO numbers)
-export async function getPurchaseOrderCount(organizationId: string) {
+export async function getPurchaseOrderCount(purchaseOrderId: string) {
   try {
     const purchaseOrderCount = await db.purchaseOrder.count({
       where: {
-        organizationId: organizationId,
+        id: purchaseOrderId,
       },
     });
     return purchaseOrderCount;
   } catch (error) {
     console.error("Error fetching purchase order count:", error);
     return 0; // Return 0 in case of error
-  }
-}
-
-export async function getPurchaseOrderById(id: string) {
-  try {
-    const purchaseOrder = await db.purchaseOrder.findUnique({
-      where: {
-        id: id,
-      },
-      include: {
-        supplier: true,
-        Location: true,
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-    return purchaseOrder;
-  } catch (error) {
-    console.error("Error fetching purchase order by ID:", error);
-    return null; // Return null in case of error
   }
 }
 
@@ -613,6 +589,97 @@ export async function sendPurchaseOrderEmail(purchaseOrderId: string) {
         error instanceof Error
           ? error.message
           : "Error sending purchase order email",
+    };
+  }
+}
+
+// get purchase order by id
+export async function getPurchaseOrderById(id: string) {
+  try {
+    const purchaseOrder = await db.purchaseOrder.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        supplier: true,
+        Location: true,
+        deliveryLocation: true,
+        organization: true,
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
+    return purchaseOrder;
+  } catch (error) {
+    console.error("Error fetching purchase order by ID:", error);
+    return null; // Return null in case of error
+  }
+}
+
+// confirm purchase order
+export async function confirmPurchaseOrder(
+  purchaseOrderId: string,
+  expectedDeliveryDate?: string,
+  supplierNotes?: string
+) {
+  try {
+    // Get the purchase order by ID
+    const purchaseOrder = await db.purchaseOrder.findUnique({
+      where: { id: purchaseOrderId },
+    });
+
+    if (!purchaseOrder) {
+      throw new Error("Purchase order not found");
+    }
+
+    // Update the purchase order status to 'APPROVED'
+    const updatedPurchaseOrder = await db.purchaseOrder.update({
+      where: { id: purchaseOrderId },
+      data: {
+        status: PurchaseOrderStatus.APPROVED,
+        // Also update the confirmed delivery date if provided
+        ...(expectedDeliveryDate && {
+          expectedDeliveryDate: new Date(expectedDeliveryDate),
+        }),
+        // Also update supplier notes if provided
+        ...(supplierNotes && {
+          supplierNotes: supplierNotes,
+        }),
+      },
+    });
+
+    // Mark the confirmation token as used
+    try {
+      // This would use the token service in a real implementation
+      // await markTokenAsUsed(token);
+    } catch (tokenError) {
+      console.error("Error marking token as used:", tokenError);
+      // Continue with the confirmation process even if marking the token fails
+    }
+
+    // Revalidate the page paths
+    revalidatePath(`/dashboard/purchases/orders/${purchaseOrderId}`);
+    revalidatePath(`/dashboard/purchases/orders`);
+
+    return {
+      success: true,
+      message: "Purchase order confirmed successfully",
+      data: updatedPurchaseOrder,
+    };
+  } catch (error) {
+    console.error("Error confirming purchase order:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Error confirming purchase order",
     };
   }
 }

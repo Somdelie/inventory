@@ -17,7 +17,8 @@ import {
   Phone,
   MapPin,
   AlertCircle,
-  Loader2
+  Loader2,
+  Package2
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useState } from "react"
@@ -35,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { formatDate } from "date-fns"
 
 // Extended interface to include supplier details
 interface PurchaseOrderDetailProps {
@@ -69,15 +71,6 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
   const supplierPhone = supplier?.phone || orderData.supplierPhone || null;
   const supplierAddress = supplier?.address || null;
   const supplierPaymentTerms = supplier?.paymentTerms || orderData.paymentTerms || "Net 30";
-  
-  const formatDate = (date: Date | string) => {
-    if (!date) return "N/A";
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    })
-  }
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -96,6 +89,11 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
       default:
         return 'bg-gray-100 text-gray-800 border-gray-300'
     }
+  }
+
+  const handleReceive = () =>{
+    // Logic to handle receiving the purchase order
+    toast.success("Purchase order received successfully")
   }
 
   const handleDelete = () => {
@@ -166,14 +164,11 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
             <p className="text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
               <span className="font-medium">{supplierName}</span> 
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-muted-foreground"></span> 
-              <span>{formatDate(orderData.date)}</span>
+              <span>{formatDate(orderData.date, "yyyy-MM-dd")}</span>
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Edit className="h-4 w-4" />
-              <span className="hidden sm:inline">Edit</span>
-            </Button>
+           
             <Button 
               variant="outline" 
               size="sm" 
@@ -187,6 +182,11 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
                 <Mail className="h-4 w-4" />
               )}
               <span className="hidden sm:inline">Send Email</span>
+            </Button>
+
+             <Button size="sm" className="gap-2 rounded">
+             <Package2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Receive Order</span>
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -285,7 +285,7 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
                   <Calendar className="h-4 w-4 text-purple-500" />
                   <span>Order Date:</span>
                 </div>
-                <div className="font-medium whitespace-nowrap">{formatDate(orderData.date)}</div>
+                <div className="font-medium whitespace-nowrap">{formatDate(orderData.date, "yyyy-MM-dd")}</div>
               </div>
 
               <div className="flex items-center justify-between border-b border-gray-100">
@@ -294,7 +294,7 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
                   <span>Delivery Date:</span>
                 </div>
                 <div className="font-medium whitespace-nowrap text-left">
-                  {orderData.expectedDeliveryDate ? formatDate(orderData.expectedDeliveryDate) : "N/A"}
+                  {orderData.expectedDeliveryDate ? formatDate(orderData.expectedDeliveryDate, "yyyy-MM-dd") : "N/A"}
                 </div>
               </div>
 
