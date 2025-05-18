@@ -75,8 +75,6 @@ export default async function PurchaseOrdersPage() {
     enhancedSupplier: !po.supplier ? supplierMap[po.id] : po.supplier 
   }))
 
-  console.log("Enhanced Purchase Orders:", enhancedPurchaseOrders)
-
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-2">

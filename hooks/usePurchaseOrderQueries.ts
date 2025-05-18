@@ -45,13 +45,18 @@ export function useOrgPurchaseOrders(organizationId: string) {
 
 // Use Suspense query to fetch all purchase orders items
 export function usePurchaseOrderLineItems(purchaseOrderId: string) {
-  const { data: lines = [], refetch } = useQuery({
+  const {
+    data: lines = [],
+    refetch,
+    isLoading,
+  } = useQuery({
     queryKey: purchaseOrderKeys.detail(purchaseOrderId),
     queryFn: () => getPurchaseOrderLineItems(purchaseOrderId),
   });
   return {
     lines,
     refetch,
+    isLoading,
   };
 }
 

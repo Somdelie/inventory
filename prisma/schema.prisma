@@ -192,6 +192,7 @@ model Organization {
   adjustments    Adjustment[]
   goodsReceipts  GoodsReceipt[]
   Inventory      Inventory[]
+  Invoice        Invoice[]
 }
 
 // Location types enum
@@ -291,6 +292,7 @@ model Item {
   transferLines      TransferLine[]
   adjustmentLines    AdjustmentLine[]
   goodsReceiptLines  GoodsReceiptLine[]
+  InvoiceLine        InvoiceLine[]
 
   @@unique([slug, organizationId])
   @@unique([sku, organizationId])
@@ -365,6 +367,7 @@ model Supplier {
   supplierRelations ItemSupplier[]
   Organization      Organization?   @relation(fields: [organizationId], references: [id])
   organizationId    String?
+  Invoice           Invoice[]
 }
 
 // Relationship between items and suppliers
@@ -486,6 +489,7 @@ model PurchaseOrder {
   discount             Float
   totalAmount          Float
   notes                String?
+  supplierNotes        String?
   paymentTerms         String?
   expectedDeliveryDate DateTime?
   orderDate            DateTime            @default(now())
@@ -511,6 +515,7 @@ model PurchaseOrder {
   confirmationTokens ConfirmationToken[]
   Location           Location?           @relation(fields: [locationId], references: [id])
   locationId         String?
+  Invoice            Invoice[]
 
   @@index([poNumber])
   @@index([supplierId])
@@ -537,6 +542,7 @@ model PurchaseOrderLine {
   itemId            String
   item              Item               @relation(fields: [itemId], references: [id], onDelete: Cascade)
   goodsReceiptLines GoodsReceiptLine[]
+  InvoiceLine       InvoiceLine[]
 
   @@index([purchaseOrderId])
   @@index([itemId])
@@ -594,6 +600,57 @@ model GoodsReceiptLine {
   @@index([goodsReceiptId])
   @@index([purchaseOrderLineId])
   @@index([itemId])
+}
+
+// Invoice
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  date          DateTime
+  dueDate       DateTime
+  status        InvoiceStatus @default(UNPAID)
+  subtotal      Float
+  taxAmount     Float
+  totalAmount   Float
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  supplierId      String?
+  supplier        Supplier?     @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  organizationId  String
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lines           InvoiceLine[]
+}
+
+model InvoiceLine {
+  id          String @id @default(cuid())
+  description String
+  quantity    Int
+  unitPrice   Float
+  taxRate     Float  @default(0)
+  taxAmount   Float  @default(0)
+  totalPrice  Float
+
+  // Relations
+  invoiceId           String
+  invoice             Invoice            @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  itemId              String
+  item                Item               @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  purchaseOrderLineId String?
+  purchaseOrderLine   PurchaseOrderLine? @relation(fields: [purchaseOrderLineId], references: [id])
+}
+
+enum InvoiceStatus {
+  DRAFT
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  VOID
 }
 
 // =======================================

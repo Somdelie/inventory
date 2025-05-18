@@ -5,11 +5,28 @@ import { getAuthenticatedUser } from "@/config/useAuth";
 import { db } from "@/prisma/db";
 import { createPurchaseOrderConfirmationUrl } from "@/services/confirmationTokenService";
 import { CreatePurchaseOrderInput } from "@/types/purchase-order";
-import { PurchaseOrderStatus, PaymentStatus } from "@prisma/client";
+import {
+  PurchaseOrderStatus,
+  PaymentStatus,
+  InvoiceStatus,
+} from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Define the interface for payload items
+interface ReceiveItem {
+  id: string;
+  receivedQuantity: number;
+}
+
+// Define the interface for the receive order payload
+interface ReceiveOrderPayload {
+  purchaseOrderId: string;
+  poNumber: string;
+  items: ReceiveItem[];
+}
 
 export async function createPurchaseOrder(data: CreatePurchaseOrderInput) {
   try {
@@ -622,36 +639,111 @@ export async function getPurchaseOrderById(id: string) {
   }
 }
 
-// confirm purchase order
+// Enhanced confirm purchase order with invoice generation
 export async function confirmPurchaseOrder(
   purchaseOrderId: string,
   expectedDeliveryDate?: string,
   supplierNotes?: string
 ) {
   try {
-    // Get the purchase order by ID
-    const purchaseOrder = await db.purchaseOrder.findUnique({
-      where: { id: purchaseOrderId },
-    });
+    // Begin transaction to handle purchase order confirmation and invoice creation
+    const result = await db.$transaction(async (tx) => {
+      // 1. Get the purchase order with its lines and related data
+      const purchaseOrder = await tx.purchaseOrder.findUnique({
+        where: { id: purchaseOrderId },
+        include: {
+          lines: {
+            include: { item: true },
+          },
+          supplier: true,
+          organization: true,
+          Location: true,
+          deliveryLocation: true,
+        },
+      });
 
-    if (!purchaseOrder) {
-      throw new Error("Purchase order not found");
-    }
+      if (!purchaseOrder) {
+        throw new Error("Purchase order not found");
+      }
 
-    // Update the purchase order status to 'APPROVED'
-    const updatedPurchaseOrder = await db.purchaseOrder.update({
-      where: { id: purchaseOrderId },
-      data: {
-        status: PurchaseOrderStatus.APPROVED,
-        // Also update the confirmed delivery date if provided
-        ...(expectedDeliveryDate && {
-          expectedDeliveryDate: new Date(expectedDeliveryDate),
-        }),
-        // Also update supplier notes if provided
-        ...(supplierNotes && {
-          supplierNotes: supplierNotes,
-        }),
-      },
+      // 2. Update the purchase order status to 'APPROVED'
+      const updatedPurchaseOrder = await tx.purchaseOrder.update({
+        where: { id: purchaseOrderId },
+        data: {
+          status: PurchaseOrderStatus.APPROVED,
+          // Also update the confirmed delivery date if provided
+          ...(expectedDeliveryDate && {
+            expectedDeliveryDate: new Date(expectedDeliveryDate),
+          }),
+          // Also update supplier notes if provided
+          ...(supplierNotes && {
+            supplierNotes: supplierNotes,
+          }),
+        },
+      });
+
+      // 3. Generate invoice number - format: INV-YYYYMMDD-XXXX
+      const now = new Date();
+      const dateString = now.toISOString().slice(0, 10).replace(/-/g, "");
+
+      const invoiceCount = await tx.invoice.count({
+        where: { organizationId: purchaseOrder.organizationId },
+      });
+
+      const invoiceNumber = `INV-${dateString}-${(invoiceCount + 1)
+        .toString()
+        .padStart(4, "0")}`;
+
+      // 4. Calculate due date based on payment terms - default to Net 30 if not specified
+      const dueDate = new Date();
+      const paymentTermsMatch = purchaseOrder.paymentTerms?.match(/\d+/);
+
+      // Default: Net 30
+      let paymentDays = 30;
+
+      // Try to extract days from payment terms
+      if (paymentTermsMatch && paymentTermsMatch[0]) {
+        const parsedDays = parseInt(paymentTermsMatch[0], 10);
+        if (!isNaN(parsedDays) && parsedDays > 0) {
+          paymentDays = parsedDays;
+        }
+      }
+
+      dueDate.setDate(dueDate.getDate() + paymentDays);
+
+      // 5. Create the invoice
+      const invoice = await tx.invoice.create({
+        data: {
+          invoiceNumber,
+          date: new Date(),
+          dueDate,
+          status: InvoiceStatus.UNPAID,
+          subtotal: purchaseOrder.subtotal,
+          taxAmount: purchaseOrder.taxAmount,
+          totalAmount: purchaseOrder.totalAmount,
+          notes: `Auto-generated invoice for Purchase Order ${purchaseOrder.poNumber}`,
+          purchaseOrder: { connect: { id: purchaseOrderId } },
+          supplier: purchaseOrder.supplierId
+            ? { connect: { id: purchaseOrder.supplierId } }
+            : undefined,
+          organization: { connect: { id: purchaseOrder.organizationId } },
+          // Create invoice lines from purchase order lines
+          lines: {
+            create: purchaseOrder.lines.map((line) => ({
+              description: line.item?.name || "Unknown Item",
+              quantity: line.quantity,
+              unitPrice: line.unitPrice,
+              taxRate: line.taxRate || 0,
+              taxAmount: line.taxAmount || 0,
+              totalPrice: line.totalPrice,
+              item: { connect: { id: line.itemId } },
+              purchaseOrderLine: { connect: { id: line.id } },
+            })),
+          },
+        },
+      });
+
+      return { updatedPurchaseOrder, invoice };
     });
 
     // Mark the confirmation token as used
@@ -666,11 +758,21 @@ export async function confirmPurchaseOrder(
     // Revalidate the page paths
     revalidatePath(`/dashboard/purchases/orders/${purchaseOrderId}`);
     revalidatePath(`/dashboard/purchases/orders`);
+    revalidatePath(`/dashboard/invoices`);
 
+    // Return successful response with invoice information
     return {
       success: true,
-      message: "Purchase order confirmed successfully",
-      data: updatedPurchaseOrder,
+      message: "Purchase order confirmed and invoice created successfully",
+      data: {
+        purchaseOrder: result.updatedPurchaseOrder,
+        invoice: {
+          id: result.invoice.id,
+          invoiceNumber: result.invoice.invoiceNumber,
+          dueDate: result.invoice.dueDate,
+          totalAmount: result.invoice.totalAmount,
+        },
+      },
     };
   } catch (error) {
     console.error("Error confirming purchase order:", error);
@@ -681,5 +783,204 @@ export async function confirmPurchaseOrder(
           ? error.message
           : "Error confirming purchase order",
     };
+  }
+}
+
+// receive purchase order
+// Function to receive a purchase order
+export async function receiveOrder(payload: ReceiveOrderPayload) {
+  try {
+    // Get the authenticated user
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
+    const organizationId = user.organizationId;
+    if (!organizationId) {
+      throw new Error("Organization ID not found for the user");
+    }
+
+    const { purchaseOrderId, items } = payload;
+
+    // Validate payload
+    if (!purchaseOrderId || !items || items.length === 0) {
+      throw new Error("Invalid payload for receiving order");
+    }
+
+    // Get the purchase order with its related data
+    const purchaseOrder = await db.purchaseOrder.findUnique({
+      where: {
+        id: purchaseOrderId,
+        organizationId,
+      },
+      include: {
+        lines: true,
+        Location: true,
+        deliveryLocation: true,
+      },
+    });
+
+    if (!purchaseOrder) {
+      throw new Error("Purchase order not found");
+    }
+
+    // Get the location for this purchase order
+    const locationId =
+      purchaseOrder.locationId || purchaseOrder.deliveryLocationId;
+    if (!locationId) {
+      throw new Error("No location found for this purchase order");
+    }
+
+    // Process the order receipt in a transaction
+    const result = await db.$transaction(async (tx) => {
+      // 1. Generate receipt number
+      const receiptNumber = `GR-${Date.now().toString().slice(-8)}`;
+
+      // 2. Create the goods receipt record
+      const goodsReceipt = await tx.goodsReceipt.create({
+        data: {
+          receiptNumber,
+          date: new Date(),
+          status: "COMPLETED",
+          notes: `Received via web interface by ${user.name}`,
+          purchaseOrder: { connect: { id: purchaseOrderId } },
+          location: { connect: { id: locationId } },
+          organization: { connect: { id: organizationId } },
+          receivedBy: { connect: { id: user.id } },
+        },
+      });
+
+      // 3. Process each received item
+      const updatedLines: {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date | null;
+        itemId: string;
+        quantity: number;
+        purchaseOrderId: string;
+        notes: string | null;
+        taxRate: number;
+        taxAmount: number;
+        discount: number | null;
+        unitPrice: number;
+        totalPrice: number;
+        receivedQuantity: number;
+      }[] = [];
+      const goodsReceiptLines = [];
+
+      for (const item of items) {
+        // Skip items with zero quantity
+        if (!item.id || item.receivedQuantity <= 0) continue;
+
+        // Find the corresponding purchase order line
+        const poLine = purchaseOrder.lines.find((line) => line.id === item.id);
+        if (!poLine) continue;
+
+        // Calculate the new received quantity for the purchase order line
+        const newReceivedQuantity =
+          (poLine.receivedQuantity || 0) + item.receivedQuantity;
+
+        // Update the purchase order line
+        const updatedLine = await tx.purchaseOrderLine.update({
+          where: { id: item.id },
+          data: { receivedQuantity: newReceivedQuantity },
+        });
+        updatedLines.push(updatedLine);
+
+        // Create a goods receipt line
+        const goodsReceiptLine = await tx.goodsReceiptLine.create({
+          data: {
+            receivedQuantity: item.receivedQuantity,
+            notes: `Received ${item.receivedQuantity} units`,
+            goodsReceipt: { connect: { id: goodsReceipt.id } },
+            purchaseOrderLine: { connect: { id: item.id } },
+            item: { connect: { id: poLine.itemId } },
+          },
+        });
+        goodsReceiptLines.push(goodsReceiptLine);
+
+        // Update inventory quantity - use upsert to handle both creation and update
+        const inventoryKey = `${poLine.itemId}_${locationId}_${organizationId}`;
+        await tx.inventory.upsert({
+          where: {
+            id: inventoryKey,
+          },
+          update: {
+            quantity: {
+              increment: item.receivedQuantity,
+            },
+            updatedAt: new Date(),
+          },
+          create: {
+            id: inventoryKey,
+            itemId: poLine.itemId,
+            locationId: locationId,
+            organizationId: organizationId,
+            quantity: item.receivedQuantity,
+          },
+        });
+      }
+
+      // 4. Determine the new purchase order status
+      let newStatus = purchaseOrder.status;
+
+      // Check if all lines are fully received
+      const allLinesFullyReceived = purchaseOrder.lines.every((line) => {
+        const updatedLine =
+          updatedLines.find((ul) => ul.id === line.id) || line;
+        return updatedLine.receivedQuantity >= updatedLine.quantity;
+      });
+
+      // Check if any lines are partially received
+      const anyLinePartiallyReceived = purchaseOrder.lines.some((line) => {
+        const updatedLine =
+          updatedLines.find((ul) => ul.id === line.id) || line;
+        return (
+          updatedLine.receivedQuantity > 0 &&
+          updatedLine.receivedQuantity < updatedLine.quantity
+        );
+      });
+
+      // Update status based on receipt state
+      if (allLinesFullyReceived) {
+        newStatus = PurchaseOrderStatus.RECEIVED;
+      } else if (anyLinePartiallyReceived) {
+        newStatus = PurchaseOrderStatus.PARTIALLY_RECEIVED;
+      }
+
+      // 5. Update the purchase order status
+      const updatedPurchaseOrder = await tx.purchaseOrder.update({
+        where: { id: purchaseOrderId },
+        data: { status: newStatus },
+      });
+
+      return {
+        goodsReceipt,
+        goodsReceiptLines,
+        updatedPurchaseOrder,
+      };
+    });
+
+    // Revalidate the relevant paths to reflect changes
+    revalidatePath(`/dashboard/purchases/orders/${purchaseOrderId}`);
+    revalidatePath("/dashboard/purchases/orders");
+    revalidatePath("/dashboard/inventory");
+
+    // Return success result
+    return {
+      success: true,
+      message: "Order received successfully",
+      data: {
+        goodsReceiptId: result.goodsReceipt.id,
+        receiptNumber: result.goodsReceipt.receiptNumber,
+        status: result.updatedPurchaseOrder.status,
+      },
+    };
+  } catch (error) {
+    console.error("Error receiving order:", error);
+    throw error instanceof Error
+      ? error
+      : new Error("An unexpected error occurred while receiving the order");
   }
 }

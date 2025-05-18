@@ -1,8 +1,9 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { Camera, PackageCheck, Clock, Calendar, Truck, FileText, CreditCard, Info, Printer, CheckCircle } from 'lucide-react';
+import { Camera, PackageCheck, Clock, Calendar, Truck, FileText, CreditCard, Info, Printer, CheckCircle, Receipt } from 'lucide-react';
 import { confirmPurchaseOrder, getPurchaseOrderById, getPurchaseOrderLineItems } from '@/actions/purchase-orders';
 import Logo from '../global/Logo';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 
 // Define the primary color - brand red to match the email template
 const PRIMARY_COLOR = '#e11d48';
@@ -13,6 +14,13 @@ const formatPrice = (price: number): string => {
         style: 'currency',
         currency: 'ZAR'
     }).format(price);
+};
+
+// Format date to local string
+const formatDate = (dateString: string | Date): string => {
+    if (!dateString) return 'N/A';
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    return date.toLocaleDateString('en-ZA');
 };
 
 // Type definitions
@@ -27,6 +35,13 @@ interface OrderItem {
 interface ContactInfo {
     email: string;
     phone: string;
+}
+
+interface InvoiceData {
+    id: string;
+    invoiceNumber: string;
+    dueDate: string | Date;
+    totalAmount: number;
 }
 
 interface OrderData {
@@ -51,12 +66,6 @@ interface OrderData {
     status: string;
 }
 
-interface ConfirmData {
-    poNumber: string;
-    status: string;
-    supplierNotes: string;
-    expectedDeliveryDate: string;
-}
 
 interface ConfirmPurchaseOrderFormProps {
     params: Promise<{ id: string }>;
@@ -68,6 +77,7 @@ const ConfirmPurchaseOrderForm: React.FC<ConfirmPurchaseOrderFormProps> = ({ par
     const [notes, setNotes] = useState('');
     const [deliveryDate, setDeliveryDate] = useState('');
     const [orderData, setOrderData] = useState<OrderData | null>(null);
+    const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
     const [items, setItems] = useState<OrderItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -170,21 +180,23 @@ const ConfirmPurchaseOrderForm: React.FC<ConfirmPurchaseOrderFormProps> = ({ par
         setIsSubmitting(true);
         
         try {
-            // Prepare the confirmation data
-            const confirmData: ConfirmData = {
-                poNumber: orderData.poNumber,
-                status: 'confirmed',
-                supplierNotes: notes,
-                expectedDeliveryDate: deliveryDate
-            };
-            
             // Call the server action to confirm the purchase order
             const result = await confirmPurchaseOrder(orderData.id, deliveryDate, notes);
             
             if (result.success) {
-              
                 setStatus('confirmed');
-                console.log('Order confirmed successfully:', confirmData);
+                
+                // Save invoice data if it was returned
+                if (result.data?.invoice) {
+                    setInvoiceData({
+                        id: result.data.invoice.id,
+                        invoiceNumber: result.data.invoice.invoiceNumber,
+                        dueDate: result.data.invoice.dueDate,
+                        totalAmount: result.data.invoice.totalAmount
+                    });
+                }
+                
+                console.log('Order confirmed successfully:', result);
             } else {
                 setError(result.message || 'Failed to confirm order');
                 console.error('Failed to confirm order:', result.message);
@@ -281,6 +293,50 @@ const ConfirmPurchaseOrderForm: React.FC<ConfirmPurchaseOrderFormProps> = ({ par
                                 </div>
                             </div>
 
+                            {/* Invoice Information Section - New */}
+                            {invoiceData && (
+                                <div className="mb-8 border border-green-200 bg-green-50 rounded-lg overflow-hidden">
+                                    <div className="bg-green-100 px-6 py-4 border-b border-green-200">
+                                        <div className="flex items-center">
+                                            <Receipt size={24} className="mr-3 text-green-600" />
+                                            <div>
+                                                <h2 className="text-lg font-medium text-green-800">Invoice Sent</h2>
+                                                <p className="text-sm text-green-700">
+                                                    An invoice has sent to your customer for this purchase order.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="p-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-500">Invoice Number</p>
+                                                <p className="text-lg font-bold text-gray-900">{invoiceData.invoiceNumber}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-500">Due Date</p>
+                                                <p className="text-lg font-bold text-gray-900">{formatDate(invoiceData.dueDate)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-500">Total Amount</p>
+                                                <p className="text-lg font-bold text-green-600">{formatPrice(invoiceData.totalAmount)}</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="mt-6 flex justify-end">
+                                            <button
+                                                type="button"
+                                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+                                                onClick={() => window.open(`/invoices/${invoiceData.id}`, '_blank')}
+                                            >
+                                                <Receipt className="h-4 w-4 mr-2" />
+                                                View Invoice
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                                 <div>
                                     <div className="flex items-center mb-3">
@@ -302,7 +358,7 @@ const ConfirmPurchaseOrderForm: React.FC<ConfirmPurchaseOrderFormProps> = ({ par
                                 </div>
                             </div>
 
-                            {notes && (
+                            {/* {notes && (
                                 <div className="mb-6 bg-gray-50 p-4 rounded-md">
                                     <div className="flex items-center mb-2">
                                         <Info size={18} className="mr-2 text-gray-500" />
@@ -310,6 +366,21 @@ const ConfirmPurchaseOrderForm: React.FC<ConfirmPurchaseOrderFormProps> = ({ par
                                     </div>
                                     <p className="text-sm text-gray-700">{notes}</p>
                                 </div>
+                            )} */}
+
+                            {notes && (
+                                <Card className="mb-6 bg-yellow-50 rounded">
+                                   <CardHeader>
+                                    <CardTitle className="text-md font-medium text-gray-900">
+                                        Additional Notes
+                                    </CardTitle>
+                                    <CardContent className='p-0'>
+                                      
+                                            {notes}
+                                       
+                                    </CardContent>
+                                   </CardHeader>
+                                </Card>
                             )}
 
                             <div className="border-t border-gray-200 pt-6 mt-6">

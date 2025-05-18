@@ -37,7 +37,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { formatDate } from "date-fns"
+import ReceiveOrderModal from "./receive-order-modal"
 
+
+// Define the ReceivePayload interface for type safety
+interface ReceivePayload {
+  purchaseOrderId: string;
+  poNumber: string;
+  items: {
+    id: string;
+    receivedQuantity: number;
+  }[];
+}
 // Extended interface to include supplier details
 interface PurchaseOrderDetailProps {
   orderData: PurchaseOrder & {
@@ -60,6 +71,9 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
+  const [isConfirmingReceive, setIsConfirmingReceive] = useState(false);
+  const [isProcessingReceive, setIsProcessingReceive] = useState(false);
   const router = useRouter();
   
   // Get supplier information - try different sources based on what's available
@@ -92,8 +106,35 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
   }
 
   const handleReceive = () =>{
-    // Logic to handle receiving the purchase order
-    toast.success("Purchase order received successfully")
+    setIsReceiveModalOpen(true)
+    console.log("Order received successfully")
+    // toast.success("Order received successfully")
+  }
+
+   // This handles the actual receiving of items
+  const handleReceiveOrder = async (payload: ReceivePayload) => {
+    setIsProcessingReceive(true);
+    
+    try {
+      // The API call is now handled in the ReceiveOrderModal
+      // We're just handling the UI update here
+      console.log("Received order data:", payload);
+      
+      // Update the UI
+      toast.success("Order received successfully");
+      
+      // Close the modal
+      setIsReceiveModalOpen(false);
+      
+      // Refresh the page to show updated data
+      router.refresh();
+      
+    } catch (error) {
+      console.error("Error receiving order:", error);
+      toast.error("Failed to process received items");
+    } finally {
+      setIsProcessingReceive(false);
+    }
   }
 
   const handleDelete = () => {
@@ -184,7 +225,9 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
               <span className="hidden sm:inline">Send Email</span>
             </Button>
 
-             <Button size="sm" className="gap-2 rounded">
+             <Button size="sm" className="gap-2 rounded"
+              onClick={handleReceive}
+            >
              <Package2 className="h-4 w-4" />
               <span className="hidden sm:inline">Receive Order</span>
             </Button>
@@ -349,6 +392,15 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
           </div>
           
           <PurchaseOrderLineTable purchaseOrderId={orderData.id} />
+
+           {/* Receive Order Modal */}
+    <ReceiveOrderModal
+            isOpen={isReceiveModalOpen}
+            onClose={() => setIsReceiveModalOpen(false)}
+           purchaseOrderId={orderData.id}
+            onReceiveOrder={handleReceiveOrder}
+            purchaseOrder={orderData}
+          />
 
           {/* Order Summary - For Mobile */}
           <div className="mt-6 sm:hidden">
