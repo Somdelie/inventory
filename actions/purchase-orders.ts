@@ -262,6 +262,7 @@ export async function getPurchaseOrders() {
       include: {
         supplier: true,
         Location: true,
+        items: true,
         createdBy: {
           select: {
             id: true,

@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dialog"
 import { formatDate } from "date-fns"
 import ReceiveOrderModal from "./receive-order-modal"
+import { usePurchaseOrderLineItems } from "@/hooks/usePurchaseOrderQueries"
 
 
 // Define the ReceivePayload interface for type safety
@@ -63,6 +64,11 @@ interface PurchaseOrderDetailProps {
       isActive: boolean;
     } | null;
     enhancedSupplier?: any; // For handling separately fetched supplier data
+    items?: {
+      id: string;
+      quantity: number;
+      receivedQuantity: number;
+    }[]; // Add items property to the type
   }
 }
 
@@ -72,9 +78,11 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
-  const [isConfirmingReceive, setIsConfirmingReceive] = useState(false);
   const [isProcessingReceive, setIsProcessingReceive] = useState(false);
+  const { lines } = usePurchaseOrderLineItems(orderData.id)
   const router = useRouter();
+
+  console.log(orderData, "orderData")	
   
   // Get supplier information - try different sources based on what's available
   const supplier = orderData.supplier || orderData.enhancedSupplier || null;
@@ -104,6 +112,16 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
         return 'bg-gray-100 text-gray-800 border-gray-300'
     }
   }
+
+  //check if order can be received based on purchased order quantity, if quantity total quantity was already received then the receive order button should be disabled
+  const canReceiveOrder = lines?.some((line) => {
+    const totalReceived = line.receivedQuantity || 0;
+    const totalQuantity = line.quantity || 0;
+    return totalReceived < totalQuantity;
+  }
+  );
+
+      const isApproved = orderData.status === 'APPROVED' || orderData.status === 'PARTIALLY_RECEIVED'; 
 
   const handleReceive = () =>{
     setIsReceiveModalOpen(true)
@@ -197,7 +215,7 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-xl font-bold">{orderData.poNumber}</h2>
               <Badge 
-                className={`text-sm px-3 py-1 border ${getStatusColor(orderData.status)}`}
+                className={`text-xs px-3 py-1 border ${getStatusColor(orderData.status)}`}
               >
                 {orderData.status}
               </Badge>
@@ -225,12 +243,13 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
               <span className="hidden sm:inline">Send Email</span>
             </Button>
 
-             <Button size="sm" className="gap-2 rounded"
+{canReceiveOrder && isApproved && (  <Button size="sm" className="gap-2 rounded"
               onClick={handleReceive}
             >
              <Package2 className="h-4 w-4" />
               <span className="hidden sm:inline">Receive Order</span>
-            </Button>
+            </Button>)}
+           
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
