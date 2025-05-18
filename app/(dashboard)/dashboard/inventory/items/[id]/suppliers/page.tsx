@@ -7,7 +7,7 @@ import ItemEditSkeleton from "../edit/loading"
 import ClientSupplierSelector from "@/components/dashboard/items/client-supplier-selector"
 import AddSuppliersModal from "@/components/dashboard/items/add-suppliers-modal"
 import { getItemById } from "@/actions/item"
-import { getSuppliersByItemId, updateItemSupplier } from "@/actions/item-suppliers"
+import { getSuppliersByItemId } from "@/actions/item-suppliers"
 import { getBriefSuppliersByOrganizationId } from "@/actions/suppliers"
 import { getAuthenticatedUser } from "@/config/useAuth"
 
@@ -15,43 +15,43 @@ export default async function ItemSuppliersPage({
   params,
   searchParams,
 }: {
-  params: { id: string }
-  searchParams: { supplierId?: string }
+   params: Promise<{ id: string }>;
+  searchParams: Promise<{ supplierId?: string }>;
 }) {
-  // Await both params and searchParams
-  const resolvedParams = await params
-  const resolvedSearchParams = await searchParams
+  // Now awaiting is correct because you're explicitly typing these as Promises
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
 
-  const id = resolvedParams.id
-  const supplierId = resolvedSearchParams.supplierId
+  const id = resolvedParams.id;
+  const supplierId = resolvedSearchParams.supplierId;
 
   // Get authenticated user
-  const user = await getAuthenticatedUser()
-  const organizationId = user?.organizationId
+  const user = await getAuthenticatedUser();
+  const organizationId = user?.organizationId;
 
   if (!organizationId) {
-    throw new Error("Organization ID not found")
+    throw new Error("Organization ID not found");
   }
 
   // Load item data
-  const { data: item, success } = await getItemById(id)
+  const { data: item, success } = await getItemById(id);
   if (!success || !item) {
-    return notFound()
+    return notFound();
   }
 
   // Load suppliers for this item
-  const itemSuppliers = await getSuppliersByItemId(id)
+  const itemSuppliers = await getSuppliersByItemId(id);
   if (!itemSuppliers) {
-    throw new Error("Failed to load suppliers")
+    throw new Error("Failed to load suppliers");
   }
 
   // Load all suppliers for the organization (for the add modal)
-  const briefSuppliers = await getBriefSuppliersByOrganizationId(organizationId)
+  const briefSuppliers = await getBriefSuppliersByOrganizationId(organizationId);
 
   // Get IDs of suppliers that are already associated with the item
-  const existingSupplierIds = itemSuppliers.map((supplier) => supplier.supplierId)
+  const existingSupplierIds = itemSuppliers.map((supplier) => supplier.supplierId);
 
-  console.log("Item Suppliers:", itemSuppliers)
+  console.log("Item Suppliers:", itemSuppliers);
 
   return (
     <Suspense fallback={<ItemEditSkeleton />}>
@@ -104,5 +104,5 @@ export default async function ItemSuppliersPage({
         />
       </div>
     </Suspense>
-  )
+  );
 }
