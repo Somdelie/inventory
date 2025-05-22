@@ -82,7 +82,7 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
   const { lines } = usePurchaseOrderLineItems(orderData.id)
   const router = useRouter();
 
-  console.log(orderData, "orderData")	
+  // console.log(orderData, "orderData")	
   
   // Get supplier information - try different sources based on what's available
   const supplier = orderData.supplier || orderData.enhancedSupplier || null;
@@ -113,15 +113,75 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
     }
   }
 
-  //check if order can be received based on purchased order quantity, if quantity total quantity was already received then the receive order button should be disabled
-  const canReceiveOrder = lines?.some((line) => {
-    const totalReceived = line.receivedQuantity || 0;
-    const totalQuantity = line.quantity || 0;
-    return totalReceived < totalQuantity;
-  }
-  );
 
-      const isApproved = orderData.status === 'APPROVED' || orderData.status === 'PARTIALLY_RECEIVED'; 
+//   // Updated canReceiveOrder function
+// const canReceiveOrder = () => {
+//   // Return false if no lines
+//   if (!lines || lines.length === 0) return false;
+  
+//   // Check if any line has items left to receive
+//   return lines.some(line => {
+//     const totalReceived = Number(line.receivedQuantity || 0);
+//     const totalQuantity = Number(line.quantity || 0);
+    
+//     // For debugging
+//     console.log(`Line item: ${line.id}, Ordered: ${totalQuantity}, Received: ${totalReceived}`);
+    
+//     // Return true if there are still items to receive
+//     return totalReceived < totalQuantity;
+//   });
+// };
+// Updated canReceiveOrder function for PurchaseOrderDetail component
+const canReceiveOrder = () => {
+  // Return false if no lines data
+  if (!lines || lines.length === 0) {
+    console.log("No lines available");
+    return false;
+  }
+  
+  // Check if any line has items left to receive
+  const hasItemsToReceive = lines.some(line => {
+    const totalReceived = Number(line.receivedQuantity || 0);
+    const totalQuantity = Number(line.quantity || 0);
+    const remaining = totalQuantity - totalReceived;
+    
+    // For debugging
+    console.log(`Line item: ${line.id}, Ordered: ${totalQuantity}, Received: ${totalReceived}, Remaining: ${remaining}`);
+    
+    // Return true if there are still items to receive
+    return remaining > 0;
+  });
+  
+  console.log("Can receive order:", hasItemsToReceive);
+  return hasItemsToReceive;
+};
+
+// Alternative: You can also add a helper function to get summary statistics
+const getReceivingSummary = () => {
+  if (!lines || lines.length === 0) return null;
+  
+  const summary = lines.reduce((acc, line) => {
+    const ordered = Number(line.quantity || 0);
+    const received = Number(line.receivedQuantity || 0);
+    const remaining = Math.max(0, ordered - received);
+    
+    return {
+      totalOrdered: acc.totalOrdered + ordered,
+      totalReceived: acc.totalReceived + received,
+      totalRemaining: acc.totalRemaining + remaining,
+    };
+  }, { totalOrdered: 0, totalReceived: 0, totalRemaining: 0 });
+  
+  return {
+    ...summary,
+    isFullyReceived: summary.totalRemaining === 0,
+    isPartiallyReceived: summary.totalReceived > 0 && summary.totalRemaining > 0,
+    canReceive: summary.totalRemaining > 0
+  };
+};
+
+     const isApproved = ['APPROVED', 'PARTIALLY_RECEIVED', 'CONFIRMED'].includes(orderData.status);
+
 
   const handleReceive = () =>{
     setIsReceiveModalOpen(true)
@@ -243,7 +303,7 @@ export default function PurchaseOrderDetail({ orderData }: PurchaseOrderDetailPr
               <span className="hidden sm:inline">Send Email</span>
             </Button>
 
-{canReceiveOrder && isApproved && (  <Button size="sm" className="gap-2 rounded"
+{canReceiveOrder() && isApproved && (  <Button size="sm" className="gap-2 rounded"
               onClick={handleReceive}
             >
              <Package2 className="h-4 w-4" />
