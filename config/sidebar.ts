@@ -80,7 +80,7 @@ export const sidebarLinks: ISidebarLink[] = [
       },
       {
         title: "Current Stock",
-        href: "/dashboard/inventory/current-stock",
+        href: "/dashboard/inventory/stock",
         permission: "products.read",
       },
       {

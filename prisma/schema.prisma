@@ -123,6 +123,7 @@ model User {
   createdAdjustments     Adjustment[]    @relation("AdjustmentCreatedBy")
   approvedAdjustments    Adjustment[]    @relation("AdjustmentApprovedBy")
   receivedGoodsReceipts  GoodsReceipt[]  @relation("GoodsReceiptReceivedBy")
+  StockMovement          StockMovement[]
 }
 
 // Invitation for new users
@@ -193,6 +194,7 @@ model Organization {
   goodsReceipts  GoodsReceipt[]
   Inventory      Inventory[]
   Invoice        Invoice[]
+  StockMovement  StockMovement[]
 }
 
 // Location types enum
@@ -228,6 +230,10 @@ model Location {
   SalesOrder        SalesOrder[]
   Organization      Organization?   @relation(fields: [organizationId], references: [id])
   organizationId    String?
+
+  StockMovementFrom StockMovement[] @relation("StockMovementFrom")
+
+  StockMovementTo StockMovement[] @relation("StockMovementTo")
 }
 
 // =======================================
@@ -293,6 +299,7 @@ model Item {
   adjustmentLines    AdjustmentLine[]
   goodsReceiptLines  GoodsReceiptLine[]
   InvoiceLine        InvoiceLine[]
+  StockMovement      StockMovement[]
 
   @@unique([slug, organizationId])
   @@unique([sku, organizationId])
@@ -409,6 +416,61 @@ model Inventory {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 }
 
+model StockMovement {
+  id            String            @id @default(cuid())
+  quantity      Int
+  type          StockMovementType
+  reason        String?
+  referenceId   String? // For linking to purchase orders, sales orders, etc.
+  referenceType String? // Type of reference (PO, SO, Transfer, etc.)
+  notes         String?
+  unitCost      Float? // Cost per unit for valuation
+  totalValue    Float? // Total value of movement
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  // Item being moved
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  // Source location (null for incoming stock like purchases)
+  fromLocationId String?
+  fromLocation   Location? @relation("StockMovementFrom", fields: [fromLocationId], references: [id])
+
+  // Destination location (null for outgoing stock like sales)
+  toLocationId String?
+  toLocation   Location? @relation("StockMovementTo", fields: [toLocationId], references: [id])
+
+  // User who performed the movement
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Organization
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@index([type])
+  @@index([referenceId])
+  @@index([createdAt])
+  @@index([organizationId])
+  @@map("stock_movements")
+}
+
+enum StockMovementType {
+  TRANSFER // Between locations
+  ADJUSTMENT // Manual adjustments
+  PURCHASE // Incoming from purchase orders
+  SALE // Outgoing from sales orders
+  RETURN // Returns from customers
+  DAMAGE // Damaged goods
+  LOSS // Lost inventory
+  PRODUCTION // Manufacturing/assembly
+  RESTOCK // General restocking
+  CYCLE_COUNT // Cycle count adjustments
+}
+
+// somdeliedev@gmail.com
 // Serial number tracking
 model SerialNumber {
   id              String       @id @default(cuid())

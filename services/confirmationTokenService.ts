@@ -68,7 +68,7 @@ export async function invalidateExistingTokens(
 export async function createPurchaseOrderConfirmationUrl(
   purchaseOrderId: string,
   expirationHours: number = 24,
-  baseUrl: string = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+  baseUrl: string = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
 ): Promise<string> {
   // Invalidate any existing tokens
   await invalidateExistingTokens(purchaseOrderId);

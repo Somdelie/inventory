@@ -57,7 +57,6 @@ export function PurchaseOrderEmail({
   orderDate,
   expectedDeliveryDate,
   companyName,
-  companyLogo,
   supplierName = "Supplier Name",
   supplierAddress,
   supplierEmail,
@@ -468,9 +467,6 @@ const confirmButtonSection = {
   borderBottom: '1px solid #eaeaea',
 };
 
-const confirmButtonLink = {
-  textDecoration: 'none',
-};
 
 const confirmButton = {
   backgroundColor: PRIMARY_COLOR,

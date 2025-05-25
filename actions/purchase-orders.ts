@@ -475,7 +475,7 @@ export async function sendPurchaseOrderEmail(purchaseOrderId: string) {
       },
     });
 
-    console.log("Purchase Order:", purchaseOrder);
+    // console.log("Purchase Order:", purchaseOrder);
 
     if (!purchaseOrder) {
       throw new Error("Purchase order not found");

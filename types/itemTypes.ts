@@ -172,6 +172,17 @@ interface Item {
   taxRate: TaxRate | null;
   suppliers: SimpleSupplierDTO[]; // Use simplified supplier type
   supplierRelations?: ItemSupplierRelation[]; // Add this field
+  inventories?: {
+    id: string;
+    locationId: string;
+    quantity: number;
+    reservedQuantity: number;
+    location: {
+      id: string;
+      name: string;
+      type: string;
+    };
+  }[];
 }
 
 interface ItemResponse {
@@ -182,5 +193,74 @@ interface ItemResponse {
   suppliers: SupplierDTO[]; // Full supplier objects
 }
 
+// Alternative: Create a separate interface for inventory items if they have different structure
+// Quick fix: Update your existing InventoryItem interface
+// Quick fix: Update your existing InventoryItem interface
+interface InventoryItem {
+  id: string;
+  name: string;
+  slug: string;
+  sku: string;
+  barcode: string | null;
+  description: string | null;
+  categoryId: string | null;
+  salesCount: number;
+  salesTotal: number;
+  costPrice: number;
+  sellingPrice: number;
+  quantity: number;
+  minStockLevel: number;
+  maxStockLevel: number | null;
+  isActive: boolean;
+  isPublished: boolean;
+  isSerialTracked: boolean;
+  dimensions: string | null;
+  weight: number | null;
+  upc: string | null;
+  ean: string | null;
+  mpn: string | null;
+  isbn: string | null;
+  thumbnail: string | null; // Changed from string to string | null
+  imageUrls: string[];
+  unitOfMeasure: string | null;
+  brandName: string | null;
+  tax: number | null;
+  organizationId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+
+  // Make sure these match your actual Prisma query structure
+  category: {
+    title: string;
+  } | null;
+
+  inventories: {
+    id: string;
+    locationId: string;
+    quantity: number;
+    reservedQuantity: number;
+    location: {
+      id: string;
+      name: string;
+      type: string;
+      createdAt: Date;
+      updatedAt: Date;
+      phone: string | null;
+      email: string | null;
+      address: string | null;
+      organizationId: string | null;
+      isActive: boolean;
+    };
+  }[];
+}
+
 // Export the interfaces
-export type { ItemResponse, Item, Category, Brand, Unit, TaxRate };
+export type {
+  ItemResponse,
+  Item,
+  Category,
+  Brand,
+  Unit,
+  TaxRate,
+  InventoryItem,
+};
