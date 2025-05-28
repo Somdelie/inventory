@@ -417,17 +417,19 @@ model Inventory {
 }
 
 model StockMovement {
-  id            String            @id @default(cuid())
+  id            String              @id @default(cuid())
   quantity      Int
+  stockNumber   String              @unique
   type          StockMovementType
+  status        StockMovementStatus @default(CREATED)
   reason        String?
   referenceId   String? // For linking to purchase orders, sales orders, etc.
   referenceType String? // Type of reference (PO, SO, Transfer, etc.)
   notes         String?
   unitCost      Float? // Cost per unit for valuation
   totalValue    Float? // Total value of movement
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 
   // Item being moved
   itemId String
@@ -455,6 +457,15 @@ model StockMovement {
   @@index([createdAt])
   @@index([organizationId])
   @@map("stock_movements")
+}
+
+// Stock movement status enum
+enum StockMovementStatus {
+  CREATED
+  APPROVED
+  IN_TRANSIT
+  COMPLETED
+  CANCELED
 }
 
 enum StockMovementType {

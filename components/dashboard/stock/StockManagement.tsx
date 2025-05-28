@@ -124,6 +124,33 @@ export default function InventoryManagementClient({
     return inventory.locationName || inventory.location?.name || 'Unknown Location';
   };
 
+  // Helper function to get unique inventories by locationId
+  const getUniqueInventories = (inventories: any[]) => {
+    const seen = new Set();
+    return inventories.filter(inv => {
+      if (seen.has(inv.locationId)) {
+        return false;
+      }
+      seen.add(inv.locationId);
+      return true;
+    });
+  };
+
+  // Helper function to get available locations for transfer
+  const getAvailableTransferLocations = () => {
+    if (!selectedItem?.inventories) return [];
+    
+    return selectedItem.inventories
+      .filter(inv => inv.quantity - inv.reservedQuantity > 0)
+      .reduce((unique: any[], inv) => {
+        // Check if this locationId already exists in our unique array
+        if (!unique.find(u => u.locationId === inv.locationId)) {
+          unique.push(inv);
+        }
+        return unique;
+      }, []);
+  };
+
   return (
     <div className="h-screen flex bg-gray-50">
       {/* Left Column - Items List */}
@@ -263,7 +290,7 @@ export default function InventoryManagementClient({
                 </Card>
                 <Card className="bg-purple-50 border-purple-200">
                   <CardContent className="p-4 text-center">
-                    <div className="text-2xl font-bold text-purple-700">{selectedItem.inventories?.length ?? 0}</div>
+                    <div className="text-2xl font-bold text-purple-700">{getUniqueInventories(selectedItem.inventories || []).length}</div>
                     <div className="text-sm text-purple-600">Locations</div>
                   </CardContent>
                 </Card>
@@ -279,12 +306,12 @@ export default function InventoryManagementClient({
               
               <div className="space-y-4">
                 {selectedItem.inventories?.length ? (
-                  selectedItem.inventories.map((location) => {
+                  getUniqueInventories(selectedItem.inventories).map((location, index) => {
                     const available = location.quantity - location.reservedQuantity;
                     const locationName = getLocationName(location);
                     
                     return (
-                      <Card key={location.locationId} className="border-l-4 border-l-blue-500">
+                      <Card key={`${location.locationId}-${index}`} className="border-l-4 border-l-blue-500">
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
@@ -361,13 +388,15 @@ export default function InventoryManagementClient({
                   <SelectValue placeholder="Select source location" />
                 </SelectTrigger>
                 <SelectContent>
-                  {selectedItem?.inventories
-                    ?.filter(inv => inv.quantity - inv.reservedQuantity > 0)
-                    .map((inv) => (
-                      <SelectItem key={inv.locationId} value={inv.locationId}>
+                  {getAvailableTransferLocations().length > 0 ? (
+                    getAvailableTransferLocations().map((inv, index) => (
+                      <SelectItem key={`from-${inv.locationId}-${index}`} value={inv.locationId}>
                         {getLocationName(inv)} ({inv.quantity - inv.reservedQuantity} available)
                       </SelectItem>
-                    )) ?? <SelectItem value="" disabled>No locations available</SelectItem>}
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>No locations available</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -384,8 +413,8 @@ export default function InventoryManagementClient({
                 <SelectContent>
                   {locations
                     .filter(loc => loc.id !== transferData.fromLocationId)
-                    .map((location) => (
-                      <SelectItem key={location.id} value={location.id}>
+                    .map((location, index) => (
+                      <SelectItem key={`to-${location.id}-${index}`} value={location.id}>
                         {location.name}
                       </SelectItem>
                     ))}
