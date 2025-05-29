@@ -70,9 +70,8 @@ const TransferDetails: React.FC<TransferProps> = ({ transfer }) => {
     );
   }
 
-    const [currentStatus, setCurrentStatus] = useState(transfer?.status || 'CREATED');
+  const [currentStatus, setCurrentStatus] = useState(transfer?.status || 'CREATED');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Removed duplicate declaration of startTransition
 
   const handleApproveTransfer = () => {
     startTransition(async () => {
@@ -88,24 +87,6 @@ const TransferDetails: React.FC<TransferProps> = ({ transfer }) => {
       } catch (error) {
         toast.error('Failed to approve transfer');
         console.error('Error approving transfer:', error);
-      }
-    });
-  };
-
-  const handleCompleteTransfer = () => {
-    startTransition(async () => {
-      try {
-        const result = await completeStockTransfer(transfer.id);
-        
-        if (result.success) {
-          setCurrentStatus('COMPLETED');
-          toast.success(result.message);
-        } else {
-          toast.error(result.error);
-        }
-      } catch (error) {
-        toast.error('Failed to complete transfer');
-        console.error('Error completing transfer:', error);
       }
     });
   };
@@ -157,13 +138,28 @@ const TransferDetails: React.FC<TransferProps> = ({ transfer }) => {
     if (statusType === 'Created') {
       return completed ? 'bg-primary shadow' : 'bg-gray-200 border border-primary';
     } else if (statusType === 'Approved') {
-      return (completed || current) ? 'bg-red-500' : 'bg-gray-200 border border-primary';
+      return (completed || current) ? 'bg-primary' : 'bg-rose-200 border border-primary';
     } else if (statusType === 'In Transit') {
-      return (completed || current) ? 'bg-gray-500' : 'bg-gray-200';
-    } else if (statusType === 'COMPLETED') {
-      return (completed || current) ? 'bg-green-500' : 'bg-gray-200';
+      // In Transit gets a static background, border animation handled separately
+      return (completed || current ) ? 'bg-rose-500' : 'bg-rose-100 border border-primary';
+    } else if (statusType === 'Completed') {
+      return (completed || current) ? 'bg-primary' : 'bg-gray-200';
     }
     return 'bg-gray-200';
+  };
+
+  // Helper function to determine line color between steps
+  const getLineColor = (currentStepIndex: number, statusHistory: any[]) => {
+    const currentStep = statusHistory[currentStepIndex];
+    const nextStep = statusHistory[currentStepIndex + 1];
+    
+    // If current step is completed, the line to the next step should be primary
+    if (currentStep.completed) {
+      return 'bg-primary';
+    }
+    
+    // Default gray color for incomplete sections
+    return 'bg-gray-300';
   };
 
   // Generate status history based on current status
@@ -321,14 +317,27 @@ const TransferDetails: React.FC<TransferProps> = ({ transfer }) => {
                 <div className="space-y-6">
                   {statusHistory.map((status, index) => (
                     <div key={index} className="flex items-start gap-4 relative">
-                      {/* Connecting line */}
+                      {/* Connecting line with dynamic color */}
                       {index < statusHistory.length - 1 && (
-                        <div className="absolute left-4 top-8 w-0.5 h-12 bg-rose-300"></div>
+                        <div className={`absolute left-4 top-8 w-0.5 h-12 ${getLineColor(index, statusHistory)}`}></div>
                       )}
                       
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStatusColor(status.status, status.completed, status.current)}`}>
-                        {getStatusIcon(status.status, status.completed, status.current)}
-                      </div>
+                      {/* Status circle with animated border for In Transit */}
+                      {status.status === 'In Transit' && currentStatus === 'IN_TRANSIT' ? (
+                        <div className="relative">
+                          {/* Animated border */}
+                          <div className="absolute inset-0 w-8 h-8 rounded-full border-2 border-dashed border-rose-300 animate-spin" style={{animationDuration: '3s'}}></div>
+                          {/* Static content */}
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStatusColor(status.status, status.completed, status.current)}`}>
+                            {getStatusIcon(status.status, status.completed, status.current)}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStatusColor(status.status, status.completed, status.current)}`}>
+                          {getStatusIcon(status.status, status.completed, status.current)}
+                        </div>
+                      )}
+                      
                       <div className="flex-1 pt-1">
                         <div className="font-medium text-gray-900">{status.status}</div>
                         <div className="text-sm text-gray-500">{status.description}</div>
