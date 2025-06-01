@@ -286,10 +286,10 @@ export default function DataTable<T>({
             {/* Table */}
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
+                <TableHeader className="bg-muted text-gray-600">
+                  <TableRow className="text-gray-600">
                     {columns.map((column, index) => (
-                      <TableHead key={index} className={column.className}>
+                      <TableHead key={index} className={column.className} >
                         {column.header}
                       </TableHead>
                     ))}
