@@ -2,6 +2,7 @@
 import React from 'react'
 import { getStockAdjustments } from '@/actions/stock-adjustments'
 import StockAdjustmentsDataTable from '@/components/dashboard/adjustment/StockAdjustmentsDataTable'
+import { Button } from '@/components/ui/moving-border'
 
 interface StockAdjustmentsContentProps {
   currentUserId: string
@@ -28,12 +29,12 @@ export default async function StockAdjustmentsContent({
               </p>
             </div>
           </div>
-          <button 
+          <Button 
             onClick={() => window.location.reload()}
             className="mt-3 px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90"
           >
             Try Again
-          </button>
+          </Button>
         </div>
       </div>
     )
